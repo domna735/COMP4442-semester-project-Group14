@@ -64,3 +64,21 @@ Finishing infrastructure-level setup first reduces rework risk and keeps later f
 Next:
 Start implementing Task Management domain functions (entity, repository, service, controller CRUD APIs) and then document that phase in this log.
 
+---
+
+## 2026-03-25 | Task Entity Implementation
+Intent:
+Begin Phase 2 core API development by completing the first Task Management domain artifact.
+
+Action:
+Implemented the Task domain model with JPA annotations, including task ID, title, description, status enum, and created/updated timestamps with lifecycle callbacks. Added persistence API dependency support and updated the implementation plan checklist to mark the Task entity item as completed.
+
+Result:
+The project now contains a concrete Task entity foundation for upcoming repository and CRUD API work. Maven test execution passed after the changes, confirming no baseline regression.
+
+Decision / Interpretation:
+Completing and validating the entity first establishes a stable schema contract for repository and service layer development, reducing integration rework.
+
+Next:
+Implement the JPA repository as the next Phase 2 step, then continue service and controller CRUD endpoints.
+

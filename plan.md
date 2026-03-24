@@ -137,7 +137,7 @@ Client (Browser / Postman / Swagger)
 - [x] Complete baseline settings (profiles, OpenAPI, global error handling, test scaffold)  
 
 ### **Phase 2 — Core API Development (Week 2)**
-- Implement Task entity  
+- [x] Implement Task entity  
 - Implement JPA repository  
 - Implement service layer  
 - Implement REST controller  
