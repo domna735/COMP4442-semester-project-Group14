@@ -30,6 +30,31 @@ The project is designed to achieve the following objectives:
 
 ---
 
+## **2.1 Assessment Alignment (Direct Mapping to ASM Requirements)**
+
+### **Metric 1: Technological Merit**
+- Spring Boot layered architecture (controller, service, repository, DTO, exception handling).
+- Cloud deployment on AWS EC2 with EBS storage and AWS RDS database integration.
+- API validation, error standardization, observability endpoints, and OpenAPI documentation.
+
+### **Metric 2: GitHub Development Trace Completeness**
+- Commit regularly with meaningful messages tied to features, tests, configuration, and deployment.
+- Maintain branch-based development for larger tasks (for example `feature/task-crud`, `feature/aws-deploy`).
+- Keep process documentation synchronized with implementation milestones.
+- Share repository access with the teacher account: `wchshapp_business@icloud.com`.
+
+### **Metric 3: Presentation and Demo Clarity (12 Accumulative Minutes)**
+- Use a fixed demo script with timed segments and fallback checkpoints.
+- Demonstrate live API flow: create, retrieve, update, delete task on deployed cloud instance.
+- Explicitly state contribution split and evidence per team member.
+
+### **Metric 4: Document Quality Compliance**
+- PowerPoint: maximum 10 pages excluding cover page.
+- Word report: maximum 10 pages excluding cover page, Times New Roman 12 pt, A4, 1-inch margins, single column, line spacing not less than single.
+- Ensure slides/report content is consistent with the live presentation.
+
+---
+
 ## **3. System Architecture**
 The system follows a simple but robust cloud‑native architecture.
 
@@ -142,6 +167,8 @@ Client (Browser / Postman / Swagger)
 - Prepare Word report  
 - Finalize GitHub README  
 - Rehearse 12‑minute demo  
+- Verify report format compliance (font, spacing, margins, page limits)  
+- Prepare member contribution evidence for examiner questions  
 
 ---
 
@@ -160,6 +187,8 @@ To satisfy the evaluation rubric:
 - README with setup instructions  
 - Architecture diagram  
 - API documentation link  
+- Process log with dated milestones  
+- Evidence artifacts for demo (test outputs, deployment screenshots, API runs)  
 
 ---
 
@@ -191,5 +220,18 @@ To satisfy the evaluation rubric:
 
 ---
 
-## **10. Conclusion**
+## **10. Pre-Submission Compliance Checklist**
+- [ ] Teacher repository access granted to `wchshapp_business@icloud.com`.
+- [ ] GitHub trace shows continuous development (not a single commit pattern).
+- [ ] Live demo path tested end-to-end on deployed cloud endpoint.
+- [ ] PowerPoint within 10-page limit (excluding cover page).
+- [ ] Word report within 10-page limit (excluding cover page).
+- [ ] Word report format verified: Times New Roman 12 pt, A4, 1-inch margins, single column, line spacing not less than single.
+- [ ] Slides/report content matches the final presentation.
+- [ ] Final submission package (PPT + Word) zipped for Learn@PolyU submission by deadline.
+- [ ] If objecting to repository reuse, email sent to `csqwang@polyu.edu.hk` with required title before final exam weeks.
+
+---
+
+## **11. Conclusion**
 This project provides a complete demonstration of cloud‑native backend development using Spring Boot and AWS. It is intentionally scoped to be achievable by a single developer while still meeting all COMP4442 evaluation criteria, including technological merit, development trace, presentation clarity, and documentation quality.
