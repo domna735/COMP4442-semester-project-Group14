@@ -4,13 +4,13 @@ import jakarta.validation.constraints.NotNull;
 
 public class CalculateRequest {
 
-    @NotNull
+    @NotNull(message = "operandA is required")
     private Double operandA;
 
-    @NotNull
+    @NotNull(message = "operandB is required")
     private Double operandB;
 
-    @NotNull
+    @NotNull(message = "operator is required")
     private Operator operator;
 
     public Double getOperandA() {

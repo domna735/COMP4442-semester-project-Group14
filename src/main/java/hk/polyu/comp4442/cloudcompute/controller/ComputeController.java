@@ -4,7 +4,6 @@ import hk.polyu.comp4442.cloudcompute.dto.CalculateRequest;
 import hk.polyu.comp4442.cloudcompute.dto.CalculateResponse;
 import hk.polyu.comp4442.cloudcompute.service.ComputeService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,13 +29,8 @@ public class ComputeController {
     }
 
     @PostMapping("/calculate")
-    public ResponseEntity<?> calculate(@Valid @RequestBody CalculateRequest request) {
-        try {
-            CalculateResponse response = computeService.calculate(request);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", ex.getMessage()));
-        }
+    public ResponseEntity<CalculateResponse> calculate(@Valid @RequestBody CalculateRequest request) {
+        CalculateResponse response = computeService.calculate(request);
+        return ResponseEntity.ok(response);
     }
 }
