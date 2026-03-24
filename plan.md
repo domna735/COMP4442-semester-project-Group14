@@ -1,10 +1,14 @@
-# Project Plan  
-Cloud‑Hosted Task Management Microservice (Spring Boot + AWS)**
+# ** Project Plan - Cloud‑Hosted Task Management Microservice (Spring Boot + AWS)**
 
 ## **1. Project Overview**
 This project aims to design, implement, and deploy a cloud‑based microservice application using **Spring Boot** and **Amazon Web Services (AWS)**. The application provides a RESTful Task Management Service that supports task creation, retrieval, updating, and deletion. The system will be deployed on **AWS EC2**, with persistent data storage on **AWS RDS** and optional use of **AWS EBS** for application storage.
 
 The project demonstrates the integration of modern backend development practices with cloud‑native deployment, aligning with the technologies and methodologies taught in COMP4442.
+
+### **Current Progress Snapshot (2026-03-24)**
+- Base setting is completed.
+- Completed items: Spring Boot baseline, validation and actuator dependencies, OpenAPI setup, environment profiles, unified exception handling, and base test scaffold.
+- Next focus: implement Task Management CRUD features and database integration.
 
 ---
 
@@ -101,18 +105,19 @@ Client (Browser / Postman / Swagger)
 
 ## **6. Implementation Plan**
 ### **Phase 1 — Project Initialization (Week 1)**
-- Create GitHub repository  
-- Initialize Spring Boot project  
-- Set up basic folder structure  
-- Commit initial project skeleton  
+- [x] Create GitHub repository  
+- [x] Initialize Spring Boot project  
+- [x] Set up basic folder structure  
+- [x] Commit initial project skeleton  
+- [x] Complete baseline settings (profiles, OpenAPI, global error handling, test scaffold)  
 
 ### **Phase 2 — Core API Development (Week 2)**
 - Implement Task entity  
 - Implement JPA repository  
 - Implement service layer  
 - Implement REST controller  
-- Add validation and error handling  
-- Add Swagger documentation  
+- Add validation and error handling for Task APIs  
+- Finalize Swagger documentation for Task APIs  
 
 ### **Phase 3 — Database Integration (Week 3)**
 - Set up AWS RDS instance  

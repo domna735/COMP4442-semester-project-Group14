@@ -46,3 +46,21 @@ Maintaining this log incrementally will reduce report-writing effort near the de
 Next:
 Continue adding one log entry per meaningful development session (coding, testing, deployment, troubleshooting, and presentation preparation).
 
+---
+
+## 2026-03-24 | Base Setting Completion
+Intent:
+Complete the project baseline configuration before implementing task management business functions.
+
+Action:
+Added foundational project settings, including OpenAPI dependency setup, environment profiles (dev/prod), standardized API error model and global exception handling, improved validation messages, and a basic Spring Boot context test.
+
+Result:
+The project now has a stable base architecture and configuration structure for the next development phase. The baseline setup changes were committed and pushed to GitHub.
+
+Decision / Interpretation:
+Finishing infrastructure-level setup first reduces rework risk and keeps later feature development focused on business logic.
+
+Next:
+Start implementing Task Management domain functions (entity, repository, service, controller CRUD APIs) and then document that phase in this log.
+
