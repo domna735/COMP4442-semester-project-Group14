@@ -4,3 +4,7 @@ target/
 *.iml
 *.log
 .DS_Store
+
+*.txt
+
+*.DS_Store
