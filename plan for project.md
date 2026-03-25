@@ -1,4 +1,4 @@
-# Group Task Split Plan (3 Main Tasks)
+# Group Task Split Plan (3 Member Tasks + 1 Joint Task)
 
 This file divides the COMP4442 project into 3 main tasks so each group member has clear ownership while still collaborating on integration and final delivery.
 
@@ -52,20 +52,20 @@ Owner: Group Member B
 ---
 
 ## Task 3 - Testing, Documentation, and Presentation Package
-Owner: Group Member C
+Owner: All Group Members (Joint Completion)
 
 ### Scope
-- Lead quality validation, documentation, and presentation readiness
+- Complete quality validation, documentation, and presentation readiness together
 - Ensure report and slides meet strict format requirements
-- Prepare final demonstration storyline and evidence package
+- Prepare final demonstration storyline and evidence package as a team
 
 ### Detailed Responsibilities
-- Execute functional testing (Postman scenarios for full CRUD)
+- Execute functional testing together (Postman scenarios for full CRUD)
 - Collect evidence artifacts (screenshots, API runs, logs)
-- Maintain README and process log updates with dated progress
-- Prepare PowerPoint (<= 10 pages excluding cover)
-- Prepare Word report (<= 10 pages excluding cover, required format)
-- Rehearse 12-minute presentation script with team
+- Co-maintain README and process log updates with dated progress
+- Co-prepare PowerPoint (<= 10 pages excluding cover)
+- Co-prepare Word report (<= 10 pages excluding cover, required format)
+- Rehearse and refine the 12-minute presentation script as a full team
 
 ### Deliverables
 - Test checklist and test result summary
@@ -74,6 +74,28 @@ Owner: Group Member C
 
 ### Milestone Target
 - Complete in final project week before submission deadline
+
+---
+
+## Task 4 - Final Integration and Submission (Team Joint Part)
+Owner: All Group Members
+
+### Scope
+- Final cross-check of all technical and documentation outputs before submission
+- Ensure consistency between codebase, deployment state, and report/presentation claims
+
+### Detailed Responsibilities
+- Perform final end-to-end verification on deployed endpoint
+- Validate checklist items in the master plan and assignment rubric
+- Verify contribution evidence for each member is clear and defensible
+- Package final submission files and confirm deadline readiness
+
+### Deliverables
+- Final verified submission package (PPT + Word + GitHub evidence)
+- Final demo run checklist with go/no-go confirmation
+
+### Milestone Target
+- Finish 1-2 days before official submission deadline
 
 ---
 
@@ -86,5 +108,6 @@ Owner: Group Member C
 ## Suggested Mapping to Current Plan
 - Phase 2 (Core API Development): Task 1 lead, Task 3 supports testing/doc updates
 - Phase 3-4 (DB + Deployment): Task 2 lead, Task 1 supports integration fixes
-- Phase 5-6 (Testing + Presentation): Task 3 lead, Task 1 and Task 2 provide technical evidence
+- Phase 5 (Testing): Task 3 joint completion by all members
+- Phase 6 (Documentation + Presentation + Final Submission): Task 4 joint completion by all members
 
