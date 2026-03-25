@@ -1,6 +1,13 @@
-# Group Task Split Plan (3 Member Tasks + 1 Joint Task)
+# Group Task Split Plan (3 Member Tasks + 2 Joint Task)
 
-This file divides the COMP4442 project into 3 main tasks so each group member has clear ownership while still collaborating on integration and final delivery.
+This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 final joint task, so each group member has clear ownership while still collaborating on integration and final delivery.
+
+## Execution Order (One by One)
+- [x] Start with Task 1 first (current focus)
+- [ ] Continue Task 2 after Task 1 core completion
+- [ ] Complete Task 3 UI design in parallel with backend stabilization
+- [ ] Complete Task 4 as full-team quality/documentation work
+- [ ] Complete Task 5 as final-team integration and submission
 
 ## Task 1 - Backend API and Business Logic
 Owner: Group Member A
@@ -51,7 +58,31 @@ Owner: Group Member B
 
 ---
 
-## Task 3 - Testing, Documentation, and Presentation Package
+## Task 3 - UI Design and Frontend Experience
+Owner: Group Member C
+
+### Scope
+- Design a clean, user-friendly UI for demonstrating Task Management flows
+- Ensure frontend interactions clearly show create, retrieve, update, and delete operations
+- Keep visual design aligned with presentation and demo narrative
+
+### Detailed Responsibilities
+- Design wireframe/mockup and final UI screens
+- Implement frontend pages/components for task list, add, edit, and delete flows
+- Connect UI with backend APIs and verify basic error-state display
+- Prepare UI screenshots and walkthrough notes for report/presentation
+
+### Deliverables
+- UI prototype/mockup and implemented UI pages
+- Frontend-to-backend integration demo for core task flows
+- UI evidence assets for final presentation
+
+### Milestone Target
+- Complete before full-team testing and final demo rehearsal
+
+---
+
+## Task 4 - Testing, Documentation, and Presentation Package
 Owner: All Group Members (Joint Completion)
 
 ### Scope
@@ -77,7 +108,7 @@ Owner: All Group Members (Joint Completion)
 
 ---
 
-## Task 4 - Final Integration and Submission (Team Joint Part)
+## Task 5 - Final Integration and Submission (Team Joint Part)
 Owner: All Group Members
 
 ### Scope
@@ -106,8 +137,8 @@ Owner: All Group Members
 - Cross-support rule: each member must review at least one other member's work before final submission.
 
 ## Suggested Mapping to Current Plan
-- Phase 2 (Core API Development): Task 1 lead, Task 3 supports testing/doc updates
+- Phase 2 (Core API Development): Task 1 lead (start first), Task 3 prepares UI integration
 - Phase 3-4 (DB + Deployment): Task 2 lead, Task 1 supports integration fixes
-- Phase 5 (Testing): Task 3 joint completion by all members
-- Phase 6 (Documentation + Presentation + Final Submission): Task 4 joint completion by all members
+- Phase 5 (Testing): Task 4 joint completion by all members
+- Phase 6 (Documentation + Presentation + Final Submission): Task 5 joint completion by all members
 
