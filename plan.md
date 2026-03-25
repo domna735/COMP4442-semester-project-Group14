@@ -138,8 +138,8 @@ Client (Browser / Postman / Swagger)
 
 ### **Phase 2 — Core API Development (Week 2)**
 - [x] Implement Task entity  
-- Implement JPA repository  
-- Implement service layer  
+- [x] Implement JPA repository  
+- [x] Implement service layer  
 - Implement REST controller  
 - Add validation and error handling for Task APIs  
 - Finalize Swagger documentation for Task APIs  

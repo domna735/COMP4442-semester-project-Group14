@@ -13,6 +13,12 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ApiError> handleTaskNotFound(TaskNotFoundException ex) {
+        ApiError error = new ApiError("TASK_NOT_FOUND", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
         ApiError error = new ApiError("BAD_REQUEST", ex.getMessage(), LocalDateTime.now());

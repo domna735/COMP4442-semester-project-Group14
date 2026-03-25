@@ -82,3 +82,21 @@ Completing and validating the entity first establishes a stable schema contract 
 Next:
 Implement the JPA repository as the next Phase 2 step, then continue service and controller CRUD endpoints.
 
+---
+
+## 2026-03-25 | Task Repository and Service Layer Implementation
+Intent:
+Complete the persistence and business logic layers for Task Management CRUD operations.
+
+Action:
+Added Spring Data JPA and H2 in-memory database dependencies for local testing. Implemented TaskRepository interface for database access. Created TaskService with full CRUD methods (create, getAll, getById, update, delete). Added TaskNotFoundException for 404 handling and extended GlobalExceptionHandler to catch task-not-found errors with proper HTTP 404 response. Configured dev profile with JPA auto-update and SQL logging for debugging.
+
+Result:
+The project now has a complete service layer with business logic separation from the controller. Repository, service, and exception handling are all tested and passing. JPA repository is auto-detected by Spring. Task entity schema is auto-created on startup via Hibernate.
+
+Decision / Interpretation:
+Implementing the service layer before the controller decouples business logic from HTTP concerns and makes future testing and refactoring easier. Adding dedicated exceptions and handlers ensures consistent API error responses across all Task endpoints.
+
+Next:
+Implement the REST controller for Task CRUD endpoints with proper HTTP methods, request/response DTOs, validation annotations, and Swagger/OpenAPI documentation tags.
+
