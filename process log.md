@@ -100,3 +100,27 @@ Implementing the service layer before the controller decouples business logic fr
 Next:
 Implement the REST controller for Task CRUD endpoints with proper HTTP methods, request/response DTOs, validation annotations, and Swagger/OpenAPI documentation tags.
 
+---
+
+## 2026-03-25 | Task REST Controller and API Completion
+Intent:
+Complete Phase 2 by implementing the full REST API layer with request/response DTOs, validation, and OpenAPI documentation.
+
+Action:
+Created CreateTaskRequest DTO with validation annotations (NotBlank, Size) for title and description fields. Created TaskResponse DTO to serialize Task entities back to clients. Implemented TaskController with five REST endpoints:
+- POST /api/v1/tasks (create new task)
+- GET /api/v1/tasks (retrieve all tasks)
+- GET /api/v1/tasks/{id} (retrieve task by ID)
+- PUT /api/v1/tasks/{id} (update task)
+- DELETE /api/v1/tasks/{id} (delete task)
+Added comprehensive Swagger/OpenAPI annotations (@Tag, @Operation, @ApiResponse, @ApiResponses) for automatic API documentation. All endpoints return proper HTTP status codes (201 Created, 200 OK, 204 No Content, 404 Not Found).
+
+Result:
+Phase 2 Core API Development is now complete. The entire Task Management CRUD API is functional with validation, error handling, persistence, and documentation. Tests pass. All five Task CRUD endpoints are ready for integration testing and deployment. API documentation is automatically generated and accessible via Swagger UI.
+
+Decision / Interpretation:
+Building DTOs separately from entities provides a clean API contract independent of database schema changes. Swagger annotations enable automatic documentation which reduces maintenance burden and keeps API docs always in sync with code.
+
+Next:
+Phase 2 complete. Ready to proceed with Phase 3 (Database Integration) and Phase 4 (Deployment). Task 1 backend work is now ready for Team Member B's AWS infrastructure setup.
+

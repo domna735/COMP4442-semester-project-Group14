@@ -140,9 +140,9 @@ Client (Browser / Postman / Swagger)
 - [x] Implement Task entity  
 - [x] Implement JPA repository  
 - [x] Implement service layer  
-- Implement REST controller  
-- Add validation and error handling for Task APIs  
-- Finalize Swagger documentation for Task APIs  
+- [x] Implement REST controller  
+- [x] Add validation and error handling for Task APIs  
+- [x] Finalize Swagger documentation for Task APIs  
 
 ### **Phase 3 — Database Integration (Week 3)**
 - Set up AWS RDS instance  
