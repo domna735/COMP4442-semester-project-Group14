@@ -2,6 +2,11 @@
 
 This document provides a comprehensive step-by-step guide to set up, configure, and run the Cloud Compute Service application from scratch.
 
+**Related Documentation:**
+- **[test_execution_guide.md](test_execution_guide.md)** — Complete manual testing procedures with 7 phases, 34 test cases, and critical user isolation verification (START HERE FOR TESTING)
+- **[realtime_demo_playbook.md](realtime_demo_playbook.md)** — 12-minute timed demonstration script for live presentation
+- **[README.md](README.md)** — Quick-start guide and API overview
+
 ---
 
 ## Table of Contents
@@ -14,7 +19,8 @@ This document provides a comprehensive step-by-step guide to set up, configure, 
 7. [API Endpoints Reference](#api-endpoints-reference)
 8. [User Authentication Flow](#user-authentication-flow)
 9. [Task Management Flow](#task-management-flow)
-10. [Troubleshooting](#troubleshooting)
+10. [Testing & Verification](#testing--verification)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 

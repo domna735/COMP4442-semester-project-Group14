@@ -6,6 +6,11 @@
 **Demo Duration:** 12 minutes (including Q&A buffer)  
 **Walkthrough Order:** Auth Flow → Task Management → User Isolation → Data Persistence
 
+**Related Documentation:**
+- **[test_execution_guide.md](test_execution_guide.md)** — Comprehensive manual testing procedures (34 test cases, critical path validation)
+- **[playbook.md](playbook.md)** — Operational setup and configuration guide
+- **[README.md](README.md)** — Quick-start reference
+
 ---
 
 ## Pre-Demo Checklist (DO THIS BEFORE PRESENTATION)
