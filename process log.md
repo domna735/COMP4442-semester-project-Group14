@@ -286,3 +286,46 @@ Separating commits by concern improves code review clarity and GitHub trace qual
 Next:
 Task 4: Execute evidence checklist to collect auth/UI screenshots, run demo playbook for rehearsal, prepare Task 4 final report/presentation package with evidence artifacts.
 
+---
+
+## 2026-03-29 | Task 4 Start - Comprehensive Test Execution Guide & Documentation Updates
+Intent:
+Begin Task 4 by creating a complete manual test execution guide that teams can follow to validate all auth, task management, user isolation, and API functionality. Update all related documentation to reference the new testing procedures.
+
+Action:
+Created comprehensive test_execution_guide.md (2,500+ lines, 7 testing phases, 34 test cases) covering:
+- Phase 1: User registration & account creation with duplicate detection
+- Phase 2: User authentication & login with valid/invalid credentials
+- Phase 3: Task CRUD operations (create, view, edit, delete) for User A (Alice)
+- Phase 4: Session management & logout verification
+- Phase 5: User isolation testing - User B (Bob) registration & login
+- Phase 6: Cross-user protection verification (critical security tests)
+- Phase 7: API documentation review via Swagger UI
+
+Added expected results, evidence requirements, and screenshots checklist for all 34 test cases. Marked 3 critical tests for user isolation (Bob cannot see Alice's tasks, Alice cannot see Bob's tasks, session management). Included test data reference table and overall test summary section.
+
+Updated playbook.md to add "Related Documentation" section linking to test_execution_guide.md as primary testing reference.
+Updated realtime_demo_playbook.md to add "Related Documentation" section linking to test_execution_guide.md for comprehensive test procedures.
+Updated plan.md progress snapshot to reflect Task 3 completion + comprehensive test documentation readiness.
+Updated plan for project.md execution order to mark Task 3 as COMPLETE and Task 4 as IN PROGRESS, added documentation reference section at top with links to all playbooks and test guide.
+
+Result:
+Task 4 now has a complete, step-by-step test execution guide ready for manual quality assurance testing. Testers can follow this guide to validate all features, collect evidence screenshots, and confirm critical security properties (user isolation, cross-user protection, session management). Documentation cross-links established so all project guides point to appropriate references.
+
+All documentation synchronized: plan.md, playbook.md, realtime_demo_playbook.md, plan for project.md, and newly created test_execution_guide.md all updated with consistent progress status and cross-references. Test execution guide serves as Task 4 primary deliverable for evidence collection and quality validation.
+
+Decision / Interpretation:
+Creating a dedicated comprehensive test execution guide (separate from the demo script and operational playbook) provides:
+1. Clear step-by-step instructions for manual testing with expected results after each action
+2. Explicit test data (alice/bob usernames, email addresses, passwords) for consistent reproduction
+3. Critical path validation with marked CRITICAL tests for security features (user isolation)
+4. Evidence collection checklist integrated into each test for final report construction
+5. Table-based test summary showing all 34 test cases and pass/fail tracking
+
+This approach reduces testing ambiguity and provides a reusable quality assurance checklist for any team member to follow independently. The critical user isolation tests ensure security properties are formally validated before deployment.
+
+Test execution guide includes pass/fail checkboxes and screenshot placeholders so testers can document exactly what they verified and attach evidence to the final report.
+
+Next:
+Execute test_execution_guide.md manually on localhost:8080 to complete all 34 test cases, collect screenshots for evidence, capture API responses, and record any issues found. Update test execution guide with actual results and attach evidence artifacts to validate Task 3 deliverables. Once all manual tests pass, proceed with demo rehearsal using realtime_demo_playbook.md, then prepare final Task 4 report and presentation package (PowerPoint + Word).
+
