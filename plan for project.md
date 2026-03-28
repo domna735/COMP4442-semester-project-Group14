@@ -66,17 +66,21 @@ Owner: Group Member C
 - Design a clean, user-friendly UI for demonstrating Task Management flows
 - Ensure frontend interactions clearly show create, retrieve, update, and delete operations
 - Keep visual design aligned with presentation and demo narrative
+- Implement SQL-backed user authentication flow (register/login/logout) and protect task pages
 
 ### Detailed Responsibilities
 - Design wireframe/mockup and final UI screens
-- Implement frontend pages/components for task list, add, edit, and delete flows
-- Connect UI with backend APIs and verify basic error-state display
+- Implement frontend pages/components for home, login, register, task list, and edit flows
+- Connect UI with backend APIs and verify auth-state + error-state display
+- Implement backend user management with SQL persistence and password hashing
+- Enforce user-scoped task CRUD so each account manages its own task records
 - Implement and run UI-based functional tests for key user flows
 - Prepare UI screenshots and walkthrough notes for report/presentation
 
 ### Deliverables
-- UI prototype/mockup and implemented UI pages
+- UI prototype/mockup and implemented multi-page auth + task UI
 - Frontend-to-backend integration demo for core task flows
+- SQL-backed user auth backend and protected task access flow
 - UI functional test cases and execution evidence
 - UI evidence assets for final presentation
 

@@ -250,3 +250,21 @@ Using a shared checklist reduces missing evidence risk and keeps final report/de
 Next:
 Execute the checklist on local and deployed environments, then attach screenshots and test outputs to Task 4 documentation artifacts.
 
+---
+
+## 2026-03-28 | Task 3 Auth Backend and Multi-Page UI Flow
+Intent:
+Implement SQL-backed user authentication and split the UI into clear pages (home, login, register, task, edit) while protecting task operations by user session.
+
+Action:
+Added Spring Security-based session authentication with SQL user persistence (`users` table), BCrypt password hashing, and auth APIs (`register`, `login`, `logout`, `me`). Updated task domain/service/controller so all task CRUD operations are scoped to the authenticated user. Reworked frontend into dedicated pages (`index.html`, `login.html`, `register.html`, `task.html`, `edit.html`) and enforced protected access for task/edit pages. Updated integration tests to cover register/login flow, protected page access, and authenticated user task CRUD.
+
+Result:
+The application now supports account-based login and user-specific task management, with page-level navigation that matches demo/report flow. Automated tests pass with the new auth and protection behavior.
+
+Decision / Interpretation:
+Adding authentication at this stage increases practical cloud-demo value and better aligns project architecture with real-world microservice expectations.
+
+Next:
+Continue Task 3 by polishing UI details, capturing screenshots for each page/state, and extending test evidence for final Task 4 report package.
+

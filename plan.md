@@ -7,8 +7,8 @@ The project demonstrates the integration of modern backend development practices
 
 ### **Current Progress Snapshot (2026-03-28)**
 - Base setting is completed.
-- Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, and Task 2 deployment runbook/templates.
-- Current focus: Task 3 UI refinement and UI-based functional testing.
+- Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, Task 2 deployment runbook/templates, and SQL-backed user authentication with protected task UI pages.
+- Current focus: Task 3 UI refinement, page-level UX polish, and expanded UI-based functional testing evidence.
 
 ---
 
@@ -97,7 +97,7 @@ Client (Browser / Postman / Swagger)
 ### **4.2 Non‑Functional Requirements**
 - **Scalability**: Cloud‑hosted, horizontally scalable.
 - **Reliability**: RDS ensures durable storage.
-- **Security**: Basic API validation; optional Spring Security.
+- **Security**: Session-based Spring Security authentication with BCrypt password hashing and user-scoped task access.
 - **Maintainability**: Clean architecture with service and repository layers.
 - **Observability**: Logging via Spring Boot + AWS CloudWatch (optional).
 

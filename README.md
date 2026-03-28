@@ -6,7 +6,7 @@ Spring Boot cloud-hosted microservice project for COMP4442.
 - Phase 1 baseline setup completed
 - Phase 2 completed: Task Management CRUD APIs implemented with validation and OpenAPI docs
 - Phase 3 started: database integration baseline prepared (dev H2 + prod env-based datasource)
-- Current focus: Task 3 UI refinement and UI-based functional testing
+- Current focus: Task 3 UI multi-page flow with SQL-backed user authentication and protected task management
 
 ## Step 1 Scope
 - Create baseline Spring Boot service
@@ -24,6 +24,24 @@ Spring Boot cloud-hosted microservice project for COMP4442.
 - `GET /api/v1/tasks/{id}`
 - `PUT /api/v1/tasks/{id}`
 - `DELETE /api/v1/tasks/{id}`
+
+## API (Authentication and User Management)
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+Notes:
+- User accounts are stored in SQL table `users`.
+- Passwords are stored as BCrypt hashes (`password_hash`).
+- Task APIs are user-scoped: each authenticated user sees and edits only their own tasks.
+
+## UI Pages
+- Home page: `/index.html`
+- Login page: `/login.html`
+- Register page: `/register.html`
+- Task page (protected): `/task.html`
+- Edit page (protected): `/edit.html?id=<taskId>`
 
 ## Task 2 RDS and EC2 Checklist (Teammate Runbook)
 Execute the following in order.
