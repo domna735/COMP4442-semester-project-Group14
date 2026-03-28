@@ -64,7 +64,7 @@ register_payload=$(cat <<JSON
 JSON
 )
 code="$(http_code POST "$BASE_URL/api/v1/auth/register" "$register_payload")"
-assert_status "$code" "200" "Register user"
+assert_status "$code" "201" "Register user"
 
 login_payload=$(cat <<JSON
 {"username":"$USERNAME","password":"$PASSWORD"}

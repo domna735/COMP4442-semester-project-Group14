@@ -103,7 +103,11 @@ echo "Running API smoke test..."
 echo ""
 echo "Setup + smoke test completed successfully."
 if [[ "$STOP_AFTER_TEST" -eq 1 ]]; then
-  echo "The app will be stopped because --stop-after-test was used."
+  if [[ "$STARTED_BY_SCRIPT" -eq 1 ]]; then
+    echo "The app will be stopped because --stop-after-test was used."
+  else
+    echo "--stop-after-test was requested, but the app was already running and was not stopped by this script."
+  fi
 else
   echo "App is available at: $BASE_URL"
   if [[ "$STARTED_BY_SCRIPT" -eq 1 ]]; then

@@ -64,7 +64,7 @@ BASE_URL=http://localhost:8080 ./scripts/smoke-test.sh
 
 You should see pass lines for all checks:
 - Ping endpoint: HTTP 200
-- Register user: HTTP 200
+- Register user: HTTP 201
 - Login user: HTTP 200
 - Get current user: HTTP 200
 - Create task: HTTP 201

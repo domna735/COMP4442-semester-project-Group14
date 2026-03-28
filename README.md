@@ -246,7 +246,7 @@ Open Swagger UI at `http://localhost:8080/swagger-ui/index.html`.
 
 Expected pass checks:
 - `GET /api/v1/compute/ping` → 200
-- `POST /api/v1/auth/register` → 200
+- `POST /api/v1/auth/register` → 201
 - `POST /api/v1/auth/login` → 200
 - `GET /api/v1/auth/me` → 200
 - `POST /api/v1/tasks` → 201
