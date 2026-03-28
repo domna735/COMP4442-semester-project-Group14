@@ -160,3 +160,21 @@ Converting deployment knowledge into a concrete runbook improves team handoff qu
 Next:
 Execute the runbook on AWS by creating the actual RDS and EC2 resources, then complete end-to-end Task CRUD verification against the cloud database endpoint.
 
+---
+
+## 2026-03-28 | Task 2 Deployment Artifact Packaging
+Intent:
+Turn Task 2 deployment instructions into reusable repository artifacts so all team members can run the same production flow.
+
+Action:
+Added deployment files under `deploy/` including an EC2 environment template (`.env.prod.example`), an executable production startup script (`run-prod.sh`), and a systemd service template (`cloud-compute.service`) that reads variables from an environment file. Updated README to point teammates to these files directly.
+
+Result:
+Task 2 now includes both documentation and executable templates, reducing manual copy/paste errors and improving team consistency during AWS deployment.
+
+Decision / Interpretation:
+Committing deployment artifacts into source control improves reproducibility and keeps operations knowledge versioned with application code.
+
+Next:
+Run the deployment artifacts on EC2 with real RDS credentials, validate service startup through systemd, and verify live Task CRUD operations from the public endpoint.
+

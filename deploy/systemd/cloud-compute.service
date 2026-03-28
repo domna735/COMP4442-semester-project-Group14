@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloud Compute Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/COMP4442-semester-project-Group14
+EnvironmentFile=/home/ubuntu/COMP4442-semester-project-Group14/deploy/ec2/.env.prod
+ExecStart=/usr/bin/java -jar /home/ubuntu/COMP4442-semester-project-Group14/target/cloud-compute-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=${SPRING_PROFILES_ACTIVE}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

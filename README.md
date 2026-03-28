@@ -114,6 +114,17 @@ sudo systemctl start cloud-compute.service
 sudo systemctl status cloud-compute.service
 ```
 
+## Deployment Files In Repository
+- Environment template: `deploy/ec2/.env.prod.example`
+- Production run script: `deploy/ec2/run-prod.sh`
+- systemd unit template: `deploy/systemd/cloud-compute.service`
+
+Make run script executable on EC2:
+
+```bash
+chmod +x deploy/ec2/run-prod.sh
+```
+
 ## API (Initial)
 - `GET /api/v1/compute/ping`
 - `POST /api/v1/compute/calculate`
