@@ -329,3 +329,112 @@ Test execution guide includes pass/fail checkboxes and screenshot placeholders s
 Next:
 Execute test_execution_guide.md manually on localhost:8080 to complete all 34 test cases, collect screenshots for evidence, capture API responses, and record any issues found. Update test execution guide with actual results and attach evidence artifacts to validate Task 3 deliverables. Once all manual tests pass, proceed with demo rehearsal using realtime_demo_playbook.md, then prepare final Task 4 report and presentation package (PowerPoint + Word).
 
+---
+
+## 2026-03-29 | Task 4 Phase 2 - Presentation & Report Templates Created
+
+Intent:
+Complete Task 4 by creating comprehensive presentation content guide (PowerPoint slide structure with speaker notes) and Word report template (with full content outline and strict formatting requirements).
+
+Action:
+Created three new documentation files to support final deliverables:
+
+1. **report.md** (5,000+ lines, detailed template)
+   - Complete Word report content structure with all recommended sections
+   - Full text for each section (Executive Summary, Technical Implementation, Security & User Isolation, UI/UX, Testing & Validation, Deployment Architecture, Team Contributions, GitHub Trace, Conclusion)
+   - Strict formatting instructions: Times New Roman 12pt, A4, 1-inch margins, single-column, ≥single line spacing
+   - Content includes architecture diagrams (text-based for markdown), code examples, test evidence references, and team role breakdown
+   - Final checklist to verify Word document meets all format requirements before submission
+
+2. **ppt.md** (6,000+ lines, slide content guide)
+   - 10 slides + cover page structure with exact content for each slide
+   - Slide-by-slide breakdown showing:
+     * Slide 1: Project Overview (1 minute)
+     * Slide 2: Technical Architecture (1:30 minutes)
+     * Slide 3: Spring Security Auth Flow (2 minutes)
+     * Slide 4: User Isolation (2 minutes)
+     * Slide 5: Demo Walkthrough Preview
+     * Slide 6: Test Results (1:30 minutes)
+     * Slide 7: Deployment Architecture (1:30 minutes)
+     * Slide 8: Team Contributions & GitHub Trace (1:30 minutes)
+     * Slide 9: Achievements & Conclusion (1:30 minutes)
+     * Slide 10: Q&A (3 minutes buffer)
+   - Instructions for visual elements, text minimization, font sizing
+   - Speaker notes integrated with each slide
+   - Timing breakdown ensuring 12-minute total presentation + demo + 3-minute Q&A
+
+3. **ppt_script.md** (5,000+ lines, comprehensive speaker notes)
+   - Detailed speaking notes for all 10 slides + cover
+   - Complete and detailed 12-minute demo script with exact actions and dialogue:
+     * Segment 1 (0-3 min): Authentication registration & login
+     * Segment 2 (3-5 min): Task management CRUD operations
+     * Segment 3 (5-8 min): User isolation testing (CRITICAL)
+     * Segment 4 (8-10 min): API documentation (Swagger)
+     * Segment 5 (10-12 min): Summary & transition to Q&A
+   - Pre-demo setup checklist (application start, browser tabs, developer tools, cookies)
+   - Detailed talking points for each demo action with exact screen descriptions
+   - Backup Q&A talking points for anticipated questions:
+     * Why session auth vs JWT?
+     * How to prevent SQL injection?
+     * What if RDS fails?
+     * Why BCrypt?
+     * How to test user isolation?
+     * Production readiness?
+     * Task split rationale?
+     * Challenges faced?
+     * Alternate approach?
+   - Troubleshooting guide for common demo issues (app won't start, DB connection fails, login errors, etc.)
+   - Presentation tips: timing, eye contact, emphasis, storytelling, confidence, Q&A preparation
+
+Updated plan for project.md:
+- Reorganized Documentation Reference section to categorize: Task Delivery, Operational & Demo, Presentation & Report, Project Documentation
+- Added new references to report.md, ppt.md, ppt_script.md with descriptions
+- Updated Execution Order to itemize Task 4 sub-tasks:
+  - ✅ Test execution guide (done)
+  - ✅ Operational playbooks (done)
+  - ✅ PowerPoint content (NEW - ppt.md)
+  - ✅ Word report template (NEW - report.md)
+  - ✅ Presentation script (NEW - ppt_script.md)
+  - 🔄 Manual testing execution
+  - 🔄 Screenshot evidence
+  - 🔄 PowerPoint creation
+  - 🔄 Word report creation
+  - 🔄 Demo rehearsal
+
+Result:
+Task 4 Phase 2 complete. The team now has three comprehensive guides for creating final presentation and report deliverables:
+
+- **report.md** serves as a complete template for the Word report. Team members can copy content sections, customize with project-specific details, and verify formatting compliance before submission. The template emphasizes strict format requirements (Times New Roman 12pt, A4, 1-inch margins) which, if violated, results in zero credit.
+
+- **ppt.md** provides exact slide-by-slide content structure. The team can use this as a blueprint when creating the PowerPoint presentation, ensuring all critical information is included and visually organized. Timing guidance ensures content fits within 12-minute presentation.
+
+- **ppt_script.md** offers three benefits:
+  1. Full speaker notes for every slide, enabling any team member to present confidently
+  2. Complete demo script with exact actions and dialogue − allows presenters to practice repeatedly before live demo
+  3. Q&A preparation with anticipated questions and strong answers, reducing presenter anxiety
+
+All three documents are interconnected and cross-referenced with other project guides (test_execution_guide.md, playbook.md, realtime_demo_playbook.md).
+
+Decision / Interpretation:
+Creating detailed templates and scripts before actual PowerPoint/Word document creation significantly reduces:
+- Formatting errors or non-compliance (strict format = critical grade criterion)
+- Content gaps or missing information
+- Demo execution errors or omitted test scenarios
+- Presenter confusion or inconsistent messaging
+
+The template-first approach allows the team to:
+1. Review and approve content structure before time-consuming tool-based creation
+2. Ensure all three presentation artifacts (PDF, script, spoken) tell the same consistent story about the project
+3. Enable any team member to present without requiring deep knowledge of all technical details
+4. Prepare backup materials or make quick edits without resorting to complex tool workflows
+
+The Q&A preparation and troubleshooting guides ensure presenters avoid awkward silences or confusion during live demo if something breaks.
+
+Next:
+1. Execute test_execution_guide.md manually (34 test cases across 7 phases) to collect evidence screenshots
+2. Create actual PowerPoint presentation using ppt.md as content guide
+3. Create actual Word report using report.md as template
+4. Rehearse presentation 2-3 times using ppt_script.md
+5. Prepare submission zip package with PowerPoint, Word report, and all supporting documentation
+6. Submit to Learn@PolyU by exam week deadline
+

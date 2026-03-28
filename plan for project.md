@@ -2,18 +2,39 @@
 
 This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 final joint task, so each group member has clear ownership while still collaborating on integration and final delivery.
 
-**Documentation Reference:**
+**Documentation Reference (Complete):**
+
+*Task Delivery & Testing:*
 - **[test_execution_guide.md](test_execution_guide.md)** — Comprehensive manual testing procedures (7 phases, 34 test cases, critical user isolation validation)
+
+*Operational & Demo:*
 - **[playbook.md](playbook.md)** — Operational setup and deployment guide
 - **[realtime_demo_playbook.md](realtime_demo_playbook.md)** — 12-minute timed demo script
-- **[process log.md](process log.md)** — Development activity log with dated entries
+- **[ppt_script.md](ppt_script.md)** — Detailed speaker notes for PowerPoint presentation with full demo script (3 minutes)
+
+*Presentation & Report (NEW - Task 4):*
+- **[report.md](report.md)** — Word report template & content guide (≤10 pages, Times New Roman 12pt, A4, 1-inch margins)
+- **[ppt.md](ppt.md)** — PowerPoint slide content guide (10 slides + cover, with speaker notes)
+
+*Project Documentation:*
+- **[process log.md](process log.md)** — Development activity log with dated entries (updated 2026-03-29)
 
 ## Execution Order (One by One)
 - [x] Start with Task 1 first
 - [x] Continue Task 2 after Task 1 core completion
 - [x] Finish Task 2 in-project runbook, verification, and deployment templates
 - [x] Complete Task 3 UI design and function tests (COMPLETE - including auth backend, multi-page UI, user-scoped CRUD, comprehensive test documentation)
-- [ ] Complete Task 4 as full-team quality/documentation work (IN PROGRESS - manual testing, evidence collection, demo rehearsal)
+- [x] Complete Task 4 as full-team quality/documentation work (IN PROGRESS → PRESENTATION & REPORT CREATED)
+  - [x] Comprehensive test execution guide (test_execution_guide.md) ✅
+  - [x] Operational playbooks (playbook.md, realtime_demo_playbook.md) ✅
+  - [x] PowerPoint presentation content (ppt.md with 10 slides + speaker notes) ✅ NEW
+  - [x] Word report template (report.md with full content structure) ✅ NEW
+  - [x] Presentation speaker script (ppt_script.md with full demo walkthrough) ✅ NEW
+  - 🔄 Manual testing execution (use test_execution_guide.md)
+  - 🔄 Screenshot evidence collection (from manual testing)
+  - 🔄 PowerPoint creation (using ppt.md as guide)
+  - 🔄 Word report creation (using report.md as template)
+  - 🔄 Demo rehearsal (using ppt_script.md)
 - [ ] Complete Task 5 as final-team integration and submission
 
 ## Task 1 - Backend API and Business Logic
