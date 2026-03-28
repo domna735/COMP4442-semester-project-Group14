@@ -4,8 +4,8 @@ This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 fi
 
 ## Execution Order (One by One)
 - [x] Start with Task 1 first
-- [x] Continue Task 2 after Task 1 core completion (current focus)
-- [ ] Complete Task 3 UI design in parallel with backend stabilization
+- [x] Continue Task 2 after Task 1 core completion
+- [ ] Complete Task 3 UI design in parallel with backend stabilization (current focus)
 - [ ] Complete Task 4 as full-team quality/documentation work
 - [ ] Complete Task 5 as final-team integration and submission
 

@@ -178,3 +178,39 @@ Committing deployment artifacts into source control improves reproducibility and
 Next:
 Run the deployment artifacts on EC2 with real RDS credentials, validate service startup through systemd, and verify live Task CRUD operations from the public endpoint.
 
+---
+
+## 2026-03-28 | Task 2 Verification and Troubleshooting Completion
+Intent:
+Finalize the in-project Task 2 deliverables by adding a quick deployment verifier and common RDS failure guidance for teammates.
+
+Action:
+Added `deploy/ec2/verify-deploy.sh` to perform fast checks against deployed endpoints (`/api/v1/compute/ping`, `/api/v1/tasks`, `/swagger-ui/index.html`, `/v3/api-docs`) using HTTP status validation. Updated README with script usage and a concise troubleshooting section covering security group misconfiguration, JDBC driver mismatch, JDBC URL format errors, and credential issues.
+
+Result:
+Task 2 now has operational guidance, executable verification, and troubleshooting instructions, enabling smoother handoff across team members even when task ownership changes.
+
+Decision / Interpretation:
+Deployment runbooks are more effective when paired with automated checks and failure playbooks; this reduces time spent diagnosing repeated cloud setup issues.
+
+Next:
+Begin Task 3 by implementing the initial UI prototype for Task Management flows and connecting it to existing backend APIs.
+
+---
+
+## 2026-03-28 | Task 3 Kickoff - UI Prototype Started
+Intent:
+Start Task 3 by delivering a visible frontend prototype that exercises Task CRUD APIs end-to-end.
+
+Action:
+Implemented an initial web UI at `src/main/resources/static/index.html` with a task form and task list. The page supports create, read, update, and delete operations through `/api/v1/tasks`, provides manual refresh controls, and shows success/error status messages for API operations.
+
+Result:
+Task 3 has started with a concrete frontend baseline that can be used for demonstration, integration testing, and later visual refinement.
+
+Decision / Interpretation:
+Starting with a functional prototype first enables rapid API validation and gives the UI owner a foundation for iterative design improvements.
+
+Next:
+Refine visual design and UX details, then capture UI evidence screenshots and integrate with Task 4 testing documentation.
+

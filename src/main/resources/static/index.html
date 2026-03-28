@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Compute Task Board</title>
+  <style>
+    :root {
+      --bg: #f4f7f2;
+      --panel: #ffffff;
+      --ink: #1f2a1f;
+      --accent: #0f766e;
+      --accent-2: #14532d;
+      --line: #dce7db;
+      --danger: #b91c1c;
+      --ok: #166534;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 15%, #e1efe3 0, transparent 38%),
+        radial-gradient(circle at 80% 0%, #d8efe9 0, transparent 32%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1100px, 94vw);
+      margin: 28px auto 36px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #114b3e, #0f766e);
+      color: #ecfdf5;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(15, 118, 110, 0.25);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.4rem, 2.5vw, 2rem);
+      letter-spacing: 0.2px;
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: var(--accent-2);
+    }
+
+    .field {
+      margin-bottom: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #c8d7c8;
+      border-radius: 9px;
+      padding: 10px;
+      font: inherit;
+      background: #fcfffc;
+    }
+
+    textarea { min-height: 90px; resize: vertical; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost { background: #eaf8f6; color: #0f766e; }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      color: #475569;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .ok { color: var(--ok); }
+    .err { color: var(--danger); }
+
+    .task-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .task-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fcfffc;
+      animation: fadeIn 0.22s ease;
+    }
+
+    .task-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      background: #def7ec;
+      color: #166534;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 0.78rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Task 3 UI Prototype: Cloud Compute Task Board</h1>
+      <p>Simple frontend for creating, viewing, editing, and deleting tasks through the Task API.</p>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Task Form</h2>
+        <form id="task-form">
+          <input type="hidden" id="task-id" />
+
+          <div class="field">
+            <label for="title">Title</label>
+            <input id="title" name="title" maxlength="120" required />
+          </div>
+
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" maxlength="1000"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary" type="submit" id="save-btn">Create Task</button>
+            <button class="btn-ghost" type="button" id="cancel-btn">Reset</button>
+          </div>
+        </form>
+        <p class="hint">API base: same host, `/api/v1/tasks`.</p>
+        <div class="status" id="status-msg"></div>
+      </article>
+
+      <article class="panel">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 10px;">
+          <h2 style="margin: 0;">Task List</h2>
+          <button class="btn-ghost" id="refresh-btn" type="button">Refresh</button>
+        </div>
+        <div id="task-list" class="task-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const apiBase = "/api/v1/tasks";
+    const form = document.getElementById("task-form");
+    const statusMsg = document.getElementById("status-msg");
+    const taskList = document.getElementById("task-list");
+    const taskIdInput = document.getElementById("task-id");
+    const titleInput = document.getElementById("title");
+    const descriptionInput = document.getElementById("description");
+    const statusInput = document.getElementById("status");
+    const saveBtn = document.getElementById("save-btn");
+
+    function setStatus(text, isError = false) {
+      statusMsg.textContent = text;
+      statusMsg.className = "status " + (isError ? "err" : "ok");
+    }
+
+    function resetForm() {
+      taskIdInput.value = "";
+      titleInput.value = "";
+      descriptionInput.value = "";
+      statusInput.value = "TODO";
+      saveBtn.textContent = "Create Task";
+    }
+
+    async function loadTasks() {
+      const res = await fetch(apiBase);
+      if (!res.ok) {
+        throw new Error("Failed to load tasks");
+      }
+      const tasks = await res.json();
+      renderTasks(tasks);
+    }
+
+    function renderTasks(tasks) {
+      if (!tasks.length) {
+        taskList.innerHTML = "<p>No tasks yet. Create your first task.</p>";
+        return;
+      }
+
+      taskList.innerHTML = tasks
+        .map(task => `
+          <div class="task-item">
+            <div class="task-top">
+              <div>
+                <strong>#${task.id} ${task.title}</strong><br />
+                <span class="pill">${task.status}</span>
+              </div>
+              <div class="actions">
+                <button class="btn-ghost" onclick="editTask(${task.id}, '${escapeHtml(task.title)}', '${escapeHtml(task.description || "")}', '${task.status}')">Edit</button>
+                <button class="btn-danger" onclick="deleteTask(${task.id})">Delete</button>
+              </div>
+            </div>
+            <p>${escapeHtml(task.description || "")}</p>
+            <div class="meta">Updated: ${new Date(task.updatedAt).toLocaleString()}</div>
+          </div>
+        `)
+        .join("");
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    window.editTask = function(id, title, description, status) {
+      taskIdInput.value = id;
+      titleInput.value = title;
+      descriptionInput.value = description;
+      statusInput.value = status;
+      saveBtn.textContent = "Update Task";
+      setStatus(`Editing task #${id}`);
+    };
+
+    window.deleteTask = async function(id) {
+      if (!confirm(`Delete task #${id}?`)) {
+        return;
+      }
+      const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setStatus(`Delete failed for task #${id}`, true);
+        return;
+      }
+      setStatus(`Task #${id} deleted`);
+      await loadTasks();
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        title: titleInput.value.trim(),
+        description: descriptionInput.value.trim(),
+        status: statusInput.value
+      };
+
+      const isUpdate = taskIdInput.value !== "";
+      const url = isUpdate ? `${apiBase}/${taskIdInput.value}` : apiBase;
+      const method = isUpdate ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        setStatus(`Save failed: ${errText}`, true);
+        return;
+      }
+
+      setStatus(isUpdate ? "Task updated" : "Task created");
+      resetForm();
+      await loadTasks();
+    });
+
+    document.getElementById("cancel-btn").addEventListener("click", () => {
+      resetForm();
+      setStatus("Form reset");
+    });
+
+    document.getElementById("refresh-btn").addEventListener("click", async () => {
+      await loadTasks();
+      setStatus("Task list refreshed");
+    });
+
+    (async () => {
+      try {
+        await loadTasks();
+        setStatus("Connected to Task API");
+      } catch (err) {
+        setStatus("Cannot load tasks API. Check backend server.", true);
+      }
+    })();
+  </script>
+</body>
+</html>

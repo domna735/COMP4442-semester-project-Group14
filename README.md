@@ -117,13 +117,42 @@ sudo systemctl status cloud-compute.service
 ## Deployment Files In Repository
 - Environment template: `deploy/ec2/.env.prod.example`
 - Production run script: `deploy/ec2/run-prod.sh`
+- Deployment verification script: `deploy/ec2/verify-deploy.sh`
 - systemd unit template: `deploy/systemd/cloud-compute.service`
 
 Make run script executable on EC2:
 
 ```bash
 chmod +x deploy/ec2/run-prod.sh
+chmod +x deploy/ec2/verify-deploy.sh
 ```
+
+Run deployment verification from EC2 or your local machine:
+
+```bash
+./deploy/ec2/verify-deploy.sh http://<EC2_PUBLIC_IP>:8080
+```
+
+## Troubleshooting RDS Connection (Quick)
+1. Security group issue
+  - Symptom: timeout or connection refused
+  - Check: RDS inbound rule allows DB port (3306/5432) from EC2 security group
+
+2. Driver class mismatch
+  - Symptom: `Cannot load driver class` error
+  - Check: `DB_DRIVER_CLASS_NAME` matches database engine
+  - MySQL: `com.mysql.cj.jdbc.Driver`
+  - PostgreSQL: `org.postgresql.Driver`
+
+3. JDBC URL format error
+  - Symptom: invalid URL or handshake error
+  - Check: endpoint, port, database name, and URL prefix are correct
+  - MySQL format: `jdbc:mysql://<endpoint>:3306/<db>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`
+  - PostgreSQL format: `jdbc:postgresql://<endpoint>:5432/<db>`
+
+4. Wrong credentials
+  - Symptom: access denied / authentication failed
+  - Check: `DB_USERNAME` and `DB_PASSWORD` values on EC2 environment or `EnvironmentFile`
 
 ## API (Initial)
 - `GET /api/v1/compute/ping`
