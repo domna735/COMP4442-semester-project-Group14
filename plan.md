@@ -5,10 +5,10 @@ This project aims to design, implement, and deploy a cloud‑based microservice 
 
 The project demonstrates the integration of modern backend development practices with cloud‑native deployment, aligning with the technologies and methodologies taught in COMP4442.
 
-### **Current Progress Snapshot (2026-03-24)**
+### **Current Progress Snapshot (2026-03-28)**
 - Base setting is completed.
-- Completed items: Spring Boot baseline, validation and actuator dependencies, OpenAPI setup, environment profiles, unified exception handling, and base test scaffold.
-- Next focus: implement Task Management CRUD features and database integration.
+- Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, and Task 2 deployment runbook/templates.
+- Current focus: Task 3 UI refinement and UI-based functional testing.
 
 ---
 
@@ -145,8 +145,9 @@ Client (Browser / Postman / Swagger)
 - [x] Finalize Swagger documentation for Task APIs  
 
 ### **Phase 3 — Database Integration (Week 3)**
+- [x] Configure Spring Boot datasource profiles (dev H2, prod env-based RDS)  
+- [x] Prepare deployment checklist/templates for RDS + EC2 + systemd  
 - Set up AWS RDS instance  
-- Configure Spring Boot datasource  
 - Test CRUD operations with cloud database  
 
 ### **Phase 4 — Deployment (Week 4)**
@@ -158,6 +159,7 @@ Client (Browser / Postman / Swagger)
 - Optional: configure Nginx reverse proxy  
 
 ### **Phase 5 — Testing & Optimization (Week 5)**
+- [x] Start UI-based functional tests (homepage + Task CRUD API flow)  
 - Functional testing via Postman  
 - Load testing (optional)  
 - Logging and monitoring setup  

@@ -14,6 +14,7 @@
       --line: #dce7db;
       --danger: #b91c1c;
       --ok: #166534;
+      --warn: #b45309;
     }
 
     * { box-sizing: border-box; }
@@ -54,6 +55,29 @@
       margin: 0;
       opacity: 0.95;
     }
+
+    .health {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #facc15;
+    }
+
+    .dot.ok { background: #86efac; }
+    .dot.err { background: #fecaca; }
 
     .grid {
       display: grid;
@@ -113,6 +137,11 @@
     .btn-ghost { background: #eaf8f6; color: #0f766e; }
     .btn-danger { background: #fee2e2; color: var(--danger); }
 
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
     .hint {
       margin-top: 8px;
       font-size: 0.84rem;
@@ -128,6 +157,7 @@
 
     .ok { color: var(--ok); }
     .err { color: var(--danger); }
+    .warn { color: var(--warn); }
 
     .task-list {
       display: grid;
@@ -155,8 +185,25 @@
       border-radius: 20px;
       font-size: 0.74rem;
       font-weight: 700;
-      background: #def7ec;
+      border: 1px solid transparent;
+    }
+
+    .pill.todo {
+      background: #e5e7eb;
+      color: #374151;
+      border-color: #d1d5db;
+    }
+
+    .pill.in-progress {
+      background: #fff7ed;
+      color: #9a3412;
+      border-color: #fed7aa;
+    }
+
+    .pill.done {
+      background: #dcfce7;
       color: #166534;
+      border-color: #bbf7d0;
     }
 
     .meta {
@@ -179,7 +226,8 @@
   <main class="page">
     <section class="hero">
       <h1>Task 3 UI Prototype: Cloud Compute Task Board</h1>
-      <p>Simple frontend for creating, viewing, editing, and deleting tasks through the Task API.</p>
+      <p>Simple and clear frontend for creating, viewing, editing, and deleting tasks through the Task API.</p>
+      <div class="health" id="api-health"><span class="dot" id="api-dot"></span><span id="api-text">Checking API...</span></div>
     </section>
 
     <section class="grid">
@@ -217,10 +265,19 @@
       </article>
 
       <article class="panel">
-        <div class="actions" style="justify-content: space-between; margin-bottom: 10px;">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 10px; align-items: center;">
           <h2 style="margin: 0;">Task List</h2>
-          <button class="btn-ghost" id="refresh-btn" type="button">Refresh</button>
+          <div class="actions">
+            <select id="filter-status" aria-label="Filter by status">
+              <option value="ALL">All</option>
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+            <button class="btn-ghost" id="refresh-btn" type="button">Refresh</button>
+          </div>
         </div>
+        <p class="hint" id="task-summary">0 tasks</p>
         <div id="task-list" class="task-list"></div>
       </article>
     </section>
@@ -231,15 +288,27 @@
     const form = document.getElementById("task-form");
     const statusMsg = document.getElementById("status-msg");
     const taskList = document.getElementById("task-list");
+    const taskSummary = document.getElementById("task-summary");
     const taskIdInput = document.getElementById("task-id");
     const titleInput = document.getElementById("title");
     const descriptionInput = document.getElementById("description");
     const statusInput = document.getElementById("status");
+    const filterStatusInput = document.getElementById("filter-status");
     const saveBtn = document.getElementById("save-btn");
+    const refreshBtn = document.getElementById("refresh-btn");
+    const apiDot = document.getElementById("api-dot");
+    const apiText = document.getElementById("api-text");
 
-    function setStatus(text, isError = false) {
+    let allTasks = [];
+
+    function setStatus(text, level = "ok") {
       statusMsg.textContent = text;
-      statusMsg.className = "status " + (isError ? "err" : "ok");
+      statusMsg.className = "status " + level;
+    }
+
+    function setApiHealth(ok, text) {
+      apiDot.className = "dot " + (ok ? "ok" : "err");
+      apiText.textContent = text;
     }
 
     function resetForm() {
@@ -255,66 +324,113 @@
       if (!res.ok) {
         throw new Error("Failed to load tasks");
       }
-      const tasks = await res.json();
-      renderTasks(tasks);
+      allTasks = await res.json();
+      renderTasks();
     }
 
-    function renderTasks(tasks) {
+    function getFilteredTasks() {
+      const selected = filterStatusInput.value;
+      if (selected === "ALL") {
+        return allTasks;
+      }
+      return allTasks.filter(t => t.status === selected);
+    }
+
+    function statusClass(status) {
+      if (status === "DONE") return "done";
+      if (status === "IN_PROGRESS") return "in-progress";
+      return "todo";
+    }
+
+    function renderTasks() {
+      const tasks = getFilteredTasks();
+      taskSummary.textContent = `${tasks.length} task(s)`;
+
       if (!tasks.length) {
         taskList.innerHTML = "<p>No tasks yet. Create your first task.</p>";
         return;
       }
 
-      taskList.innerHTML = tasks
-        .map(task => `
-          <div class="task-item">
-            <div class="task-top">
-              <div>
-                <strong>#${task.id} ${task.title}</strong><br />
-                <span class="pill">${task.status}</span>
-              </div>
-              <div class="actions">
-                <button class="btn-ghost" onclick="editTask(${task.id}, '${escapeHtml(task.title)}', '${escapeHtml(task.description || "")}', '${task.status}')">Edit</button>
-                <button class="btn-danger" onclick="deleteTask(${task.id})">Delete</button>
-              </div>
-            </div>
-            <p>${escapeHtml(task.description || "")}</p>
-            <div class="meta">Updated: ${new Date(task.updatedAt).toLocaleString()}</div>
-          </div>
-        `)
-        .join("");
+      taskList.innerHTML = "";
+      tasks.forEach(task => {
+        const item = document.createElement("div");
+        item.className = "task-item";
+
+        const top = document.createElement("div");
+        top.className = "task-top";
+
+        const info = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = `#${task.id} ${task.title}`;
+        const br = document.createElement("br");
+        const pill = document.createElement("span");
+        pill.className = `pill ${statusClass(task.status)}`;
+        pill.textContent = task.status;
+
+        info.appendChild(title);
+        info.appendChild(br);
+        info.appendChild(pill);
+
+        const actionGroup = document.createElement("div");
+        actionGroup.className = "actions";
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "btn-ghost";
+        editBtn.textContent = "Edit";
+        editBtn.addEventListener("click", () => editTask(task));
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "btn-danger";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => deleteTask(task.id));
+
+        actionGroup.appendChild(editBtn);
+        actionGroup.appendChild(deleteBtn);
+        top.appendChild(info);
+        top.appendChild(actionGroup);
+
+        const desc = document.createElement("p");
+        desc.textContent = task.description || "";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `Updated: ${new Date(task.updatedAt).toLocaleString()}`;
+
+        item.appendChild(top);
+        item.appendChild(desc);
+        item.appendChild(meta);
+        taskList.appendChild(item);
+      });
     }
 
-    function escapeHtml(str) {
-      return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    window.editTask = function(id, title, description, status) {
-      taskIdInput.value = id;
-      titleInput.value = title;
-      descriptionInput.value = description;
-      statusInput.value = status;
+    function editTask(task) {
+      taskIdInput.value = task.id;
+      titleInput.value = task.title;
+      descriptionInput.value = task.description || "";
+      statusInput.value = task.status;
       saveBtn.textContent = "Update Task";
-      setStatus(`Editing task #${id}`);
-    };
+      setStatus(`Editing task #${task.id}`, "warn");
+      titleInput.focus();
+    }
 
-    window.deleteTask = async function(id) {
+    async function deleteTask(id) {
       if (!confirm(`Delete task #${id}?`)) {
         return;
       }
       const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
       if (!res.ok) {
-        setStatus(`Delete failed for task #${id}`, true);
+        setStatus(`Delete failed for task #${id}`, "err");
         return;
       }
-      setStatus(`Task #${id} deleted`);
+      setStatus(`Task #${id} deleted`, "ok");
       await loadTasks();
-    };
+    }
+
+    function setBusy(isBusy) {
+      saveBtn.disabled = isBusy;
+      refreshBtn.disabled = isBusy;
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -329,6 +445,7 @@
       const url = isUpdate ? `${apiBase}/${taskIdInput.value}` : apiBase;
       const method = isUpdate ? "PUT" : "POST";
 
+      setBusy(true);
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -337,31 +454,39 @@
 
       if (!res.ok) {
         const errText = await res.text();
-        setStatus(`Save failed: ${errText}`, true);
+        setStatus(`Save failed: ${errText}`, "err");
+        setBusy(false);
         return;
       }
 
-      setStatus(isUpdate ? "Task updated" : "Task created");
+      setStatus(isUpdate ? "Task updated" : "Task created", "ok");
       resetForm();
       await loadTasks();
+      setBusy(false);
     });
 
     document.getElementById("cancel-btn").addEventListener("click", () => {
       resetForm();
-      setStatus("Form reset");
+      setStatus("Form reset", "warn");
     });
 
-    document.getElementById("refresh-btn").addEventListener("click", async () => {
+    refreshBtn.addEventListener("click", async () => {
       await loadTasks();
-      setStatus("Task list refreshed");
+      setStatus("Task list refreshed", "ok");
+    });
+
+    filterStatusInput.addEventListener("change", () => {
+      renderTasks();
     });
 
     (async () => {
       try {
         await loadTasks();
-        setStatus("Connected to Task API");
+        setStatus("Connected to Task API", "ok");
+        setApiHealth(true, "API Connected");
       } catch (err) {
-        setStatus("Cannot load tasks API. Check backend server.", true);
+        setStatus("Cannot load tasks API. Check backend server.", "err");
+        setApiHealth(false, "API Unreachable");
       }
     })();
   </script>

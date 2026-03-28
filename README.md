@@ -189,3 +189,18 @@ Open Swagger UI at `http://localhost:8080/swagger-ui/index.html`.
 ```bash
 mvn test
 ```
+
+## UI-Based Functional Test (Started)
+Automated UI-backed function tests are implemented in:
+- `src/test/java/hk/polyu/comp4442/cloudcompute/TaskUiAndApiIntegrationTests.java`
+
+What is covered:
+- UI homepage availability (`/` and `/index.html`)
+- Task API CRUD flow used by the UI (create, list, update, delete)
+- Validation error behavior for invalid task payloads
+
+Run only UI/API integration tests:
+
+```bash
+mvn -Dtest=TaskUiAndApiIntegrationTests test
+```

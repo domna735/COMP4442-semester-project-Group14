@@ -5,7 +5,8 @@ This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 fi
 ## Execution Order (One by One)
 - [x] Start with Task 1 first
 - [x] Continue Task 2 after Task 1 core completion
-- [ ] Complete Task 3 UI design in parallel with backend stabilization (current focus)
+- [x] Finish Task 2 in-project runbook, verification, and deployment templates
+- [ ] Complete Task 3 UI design and function tests (current focus)
 - [ ] Complete Task 4 as full-team quality/documentation work
 - [ ] Complete Task 5 as final-team integration and submission
 
@@ -70,11 +71,13 @@ Owner: Group Member C
 - Design wireframe/mockup and final UI screens
 - Implement frontend pages/components for task list, add, edit, and delete flows
 - Connect UI with backend APIs and verify basic error-state display
+- Implement and run UI-based functional tests for key user flows
 - Prepare UI screenshots and walkthrough notes for report/presentation
 
 ### Deliverables
 - UI prototype/mockup and implemented UI pages
 - Frontend-to-backend integration demo for core task flows
+- UI functional test cases and execution evidence
 - UI evidence assets for final presentation
 
 ### Milestone Target

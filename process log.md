@@ -214,3 +214,21 @@ Starting with a functional prototype first enables rapid API validation and give
 Next:
 Refine visual design and UX details, then capture UI evidence screenshots and integrate with Task 4 testing documentation.
 
+---
+
+## 2026-03-28 | Task 3 UI Refinement and Function Test Start
+Intent:
+Improve UI clarity/usability and begin UI-based functional testing with repeatable automated checks.
+
+Action:
+Refined the Task Board UI to make it easier to use: added API health indicator, status filter, clearer feedback states, and safer event handling without inline HTML actions. Added a new integration test class that validates the UI homepage response and the full Task CRUD flow used by the UI (create, list, update, delete, and not-found validation).
+
+Result:
+Task 3 now has both an improved user-facing interface and a concrete functional testing baseline for core UI-backed behaviors.
+
+Decision / Interpretation:
+Pairing UI iteration with automated functional tests reduces regression risk and gives the team faster confidence during further frontend changes.
+
+Next:
+Continue Task 3 by polishing visual details, capturing UI evidence screenshots, and adding a concise UI test checklist for Task 4 documentation.
+
