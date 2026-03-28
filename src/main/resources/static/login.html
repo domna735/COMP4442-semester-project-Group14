@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+      background: linear-gradient(140deg, #e8f7f3, #eef7e8);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      color: #1f2a1f;
+    }
+    .card {
+      width: min(460px, 94vw);
+      background: #fff;
+      border: 1px solid #dce7db;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 14px 32px rgba(16, 24, 40, 0.12);
+    }
+    h1 { margin-top: 0; color: #14532d; }
+    .field { display: grid; gap: 6px; margin-bottom: 10px; }
+    input {
+      border: 1px solid #c8d7c8;
+      border-radius: 9px;
+      padding: 10px;
+      font: inherit;
+    }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px;
+      background: #0f766e;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .status { min-height: 22px; margin-top: 8px; font-size: 0.9rem; }
+    .err { color: #b91c1c; }
+    .ok { color: #166534; }
+    a { color: #0f766e; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Login</h1>
+    <form id="login-form">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" required />
+      </div>
+      <button type="submit">Sign In</button>
+    </form>
+    <div id="status" class="status"></div>
+    <p><a href="/register.html">No account yet? Register</a></p>
+    <p><a href="/index.html">Back to Home</a></p>
+  </main>
+
+  <script>
+    const form = document.getElementById("login-form");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+
+      const payload = {
+        username: document.getElementById("username").value.trim(),
+        password: document.getElementById("password").value
+      };
+
+      const res = await fetch("/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        statusEl.className = "status err";
+        statusEl.textContent = "Login failed: " + text;
+        return;
+      }
+
+      statusEl.className = "status ok";
+      statusEl.textContent = "Login successful. Redirecting...";
+      window.location.href = "/task.html";
+    });
+  </script>
+</body>
+</html>

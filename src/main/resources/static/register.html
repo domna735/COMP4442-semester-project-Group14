@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+      background: linear-gradient(150deg, #edf8f5, #f6fbe9);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      color: #1f2a1f;
+    }
+    .card {
+      width: min(460px, 94vw);
+      background: #fff;
+      border: 1px solid #dce7db;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 14px 32px rgba(16, 24, 40, 0.12);
+    }
+    h1 { margin-top: 0; color: #14532d; }
+    .field { display: grid; gap: 6px; margin-bottom: 10px; }
+    input {
+      border: 1px solid #c8d7c8;
+      border-radius: 9px;
+      padding: 10px;
+      font: inherit;
+    }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px;
+      background: #0f766e;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .status { min-height: 22px; margin-top: 8px; font-size: 0.9rem; }
+    .err { color: #b91c1c; }
+    .ok { color: #166534; }
+    a { color: #0f766e; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Register</h1>
+    <form id="register-form">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" minlength="3" maxlength="80" required />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" maxlength="120" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" minlength="6" maxlength="100" required />
+      </div>
+      <button type="submit">Create Account</button>
+    </form>
+    <div id="status" class="status"></div>
+    <p><a href="/login.html">Already have account? Login</a></p>
+    <p><a href="/index.html">Back to Home</a></p>
+  </main>
+
+  <script>
+    const form = document.getElementById("register-form");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "";
+
+      const payload = {
+        username: document.getElementById("username").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value
+      };
+
+      const res = await fetch("/api/v1/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        statusEl.className = "status err";
+        statusEl.textContent = "Register failed: " + text;
+        return;
+      }
+
+      statusEl.className = "status ok";
+      statusEl.textContent = "Registration successful. Redirecting to login...";
+      setTimeout(() => {
+        window.location.href = "/login.html";
+      }, 500);
+    });
+  </script>
+</body>
+</html>

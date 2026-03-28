@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Page</title>
+  <style>
+    :root {
+      --bg: #f4f7f2;
+      --panel: #ffffff;
+      --ink: #1f2a1f;
+      --accent: #0f766e;
+      --accent-2: #14532d;
+      --line: #dce7db;
+      --danger: #b91c1c;
+      --ok: #166534;
+      --warn: #b45309;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 15%, #e1efe3 0, transparent 38%),
+        radial-gradient(circle at 80% 0%, #d8efe9 0, transparent 32%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1100px, 94vw);
+      margin: 28px auto 36px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero {
+      background: linear-gradient(120deg, #114b3e, #0f766e);
+      color: #ecfdf5;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 12px 30px rgba(15, 118, 110, 0.25);
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .hero h1 { margin: 0 0 8px; font-size: clamp(1.2rem, 2.5vw, 1.8rem); }
+    .hero p { margin: 0; opacity: 0.95; }
+
+    .mini-btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #eaf8f6;
+      color: #0f766e;
+      text-decoration: none;
+    }
+
+    .health {
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #facc15; }
+    .dot.ok { background: #86efac; }
+    .dot.err { background: #fecaca; }
+
+    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
+    }
+
+    h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--accent-2); }
+    .field { margin-bottom: 10px; display: grid; gap: 6px; }
+    label { font-size: 0.85rem; font-weight: 700; color: #334155; }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #c8d7c8;
+      border-radius: 9px;
+      padding: 10px;
+      font: inherit;
+      background: #fcfffc;
+    }
+
+    textarea { min-height: 90px; resize: vertical; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost { background: #eaf8f6; color: #0f766e; }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+
+    .hint { margin-top: 8px; font-size: 0.84rem; color: #475569; }
+    .status { min-height: 24px; margin-top: 8px; font-size: 0.9rem; font-weight: 700; }
+    .ok { color: var(--ok); }
+    .err { color: var(--danger); }
+    .warn { color: var(--warn); }
+
+    .task-list { display: grid; gap: 10px; }
+
+    .task-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: #fcfffc;
+    }
+
+    .task-top { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .pill.todo { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
+    .pill.in-progress { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+    .pill.done { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .meta { margin-top: 8px; color: #64748b; font-size: 0.78rem; }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>Task Page</h1>
+          <p id="user-label">Signed in user</p>
+        </div>
+        <div class="actions">
+          <a class="mini-btn" href="/index.html">Home</a>
+          <button class="mini-btn" id="logout-btn" type="button">Logout</button>
+        </div>
+      </div>
+      <div class="health" id="api-health"><span class="dot" id="api-dot"></span><span id="api-text">Checking API...</span></div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <h2>Create Task</h2>
+        <form id="task-form">
+          <div class="field">
+            <label for="title">Title</label>
+            <input id="title" maxlength="120" required />
+          </div>
+
+          <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" maxlength="1000"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary" type="submit">Create Task</button>
+          </div>
+        </form>
+        <div class="status" id="status-msg"></div>
+      </article>
+
+      <article class="panel">
+        <div class="actions" style="justify-content: space-between; margin-bottom: 10px; align-items: center;">
+          <h2 style="margin: 0;">Task List</h2>
+          <div class="actions">
+            <select id="filter-status" aria-label="Filter by status">
+              <option value="ALL">All</option>
+              <option value="TODO">TODO</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="DONE">DONE</option>
+            </select>
+            <button class="btn-ghost" id="refresh-btn" type="button">Refresh</button>
+          </div>
+        </div>
+        <p class="hint" id="task-summary">0 tasks</p>
+        <div id="task-list" class="task-list"></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const apiBase = "/api/v1/tasks";
+    const form = document.getElementById("task-form");
+    const statusMsg = document.getElementById("status-msg");
+    const taskList = document.getElementById("task-list");
+    const taskSummary = document.getElementById("task-summary");
+    const titleInput = document.getElementById("title");
+    const descriptionInput = document.getElementById("description");
+    const statusInput = document.getElementById("status");
+    const filterStatusInput = document.getElementById("filter-status");
+    const refreshBtn = document.getElementById("refresh-btn");
+    const apiDot = document.getElementById("api-dot");
+    const apiText = document.getElementById("api-text");
+    const userLabel = document.getElementById("user-label");
+
+    let allTasks = [];
+
+    function setStatus(text, level = "ok") {
+      statusMsg.textContent = text;
+      statusMsg.className = "status " + level;
+    }
+
+    function setApiHealth(ok, text) {
+      apiDot.className = "dot " + (ok ? "ok" : "err");
+      apiText.textContent = text;
+    }
+
+    async function ensureAuth() {
+      const res = await fetch("/api/v1/auth/me");
+      if (!res.ok) {
+        window.location.href = "/login.html";
+        throw new Error("Not authenticated");
+      }
+      const user = await res.json();
+      userLabel.textContent = `Signed in as ${user.username}`;
+    }
+
+    async function loadTasks() {
+      const res = await fetch(apiBase);
+      if (!res.ok) {
+        throw new Error("Failed to load tasks");
+      }
+      allTasks = await res.json();
+      renderTasks();
+    }
+
+    function getFilteredTasks() {
+      const selected = filterStatusInput.value;
+      if (selected === "ALL") {
+        return allTasks;
+      }
+      return allTasks.filter((t) => t.status === selected);
+    }
+
+    function statusClass(status) {
+      if (status === "DONE") return "done";
+      if (status === "IN_PROGRESS") return "in-progress";
+      return "todo";
+    }
+
+    function renderTasks() {
+      const tasks = getFilteredTasks();
+      taskSummary.textContent = `${tasks.length} task(s)`;
+
+      if (!tasks.length) {
+        taskList.innerHTML = "<p>No tasks yet. Create your first task.</p>";
+        return;
+      }
+
+      taskList.innerHTML = "";
+      tasks.forEach((task) => {
+        const item = document.createElement("div");
+        item.className = "task-item";
+
+        const top = document.createElement("div");
+        top.className = "task-top";
+
+        const info = document.createElement("div");
+        const title = document.createElement("strong");
+        title.textContent = `#${task.id} ${task.title}`;
+        const br = document.createElement("br");
+        const pill = document.createElement("span");
+        pill.className = `pill ${statusClass(task.status)}`;
+        pill.textContent = task.status;
+
+        info.appendChild(title);
+        info.appendChild(br);
+        info.appendChild(pill);
+
+        const actionGroup = document.createElement("div");
+        actionGroup.className = "actions";
+
+        const editLink = document.createElement("a");
+        editLink.className = "mini-btn";
+        editLink.href = `/edit.html?id=${task.id}`;
+        editLink.textContent = "Edit";
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "btn-danger";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => deleteTask(task.id));
+
+        actionGroup.appendChild(editLink);
+        actionGroup.appendChild(deleteBtn);
+
+        top.appendChild(info);
+        top.appendChild(actionGroup);
+
+        const desc = document.createElement("p");
+        desc.textContent = task.description || "";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = `Owner: ${task.ownerUsername || "-"} | Updated: ${new Date(task.updatedAt).toLocaleString()}`;
+
+        item.appendChild(top);
+        item.appendChild(desc);
+        item.appendChild(meta);
+        taskList.appendChild(item);
+      });
+    }
+
+    async function deleteTask(id) {
+      if (!confirm(`Delete task #${id}?`)) {
+        return;
+      }
+      const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setStatus(`Delete failed for task #${id}`, "err");
+        return;
+      }
+      setStatus(`Task #${id} deleted`, "ok");
+      await loadTasks();
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        title: titleInput.value.trim(),
+        description: descriptionInput.value.trim(),
+        status: statusInput.value
+      };
+
+      const res = await fetch(apiBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        setStatus(`Create failed: ${errText}`, "err");
+        return;
+      }
+
+      setStatus("Task created", "ok");
+      form.reset();
+      statusInput.value = "TODO";
+      await loadTasks();
+    });
+
+    refreshBtn.addEventListener("click", async () => {
+      await loadTasks();
+      setStatus("Task list refreshed", "ok");
+    });
+
+    filterStatusInput.addEventListener("change", () => {
+      renderTasks();
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await fetch("/api/v1/auth/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    });
+
+    (async () => {
+      try {
+        await ensureAuth();
+        await loadTasks();
+        setStatus("Connected to Task API", "ok");
+        setApiHealth(true, "API Connected");
+      } catch (err) {
+        setStatus("Cannot load tasks API. Check backend server.", "err");
+        setApiHealth(false, "API Unreachable");
+      }
+    })();
+  </script>
+</body>
+</html>
