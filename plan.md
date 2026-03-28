@@ -5,11 +5,12 @@ This project aims to design, implement, and deploy a cloud‑based microservice 
 
 The project demonstrates the integration of modern backend development practices with cloud‑native deployment, aligning with the technologies and methodologies taught in COMP4442.
 
-### **Current Progress Snapshot (2026-03-28 - Task 3 Complete)**
+### **Current Progress Snapshot (2026-03-29 - Task 3 Complete + Comprehensive Test Documentation)**
 - Base setting is completed.
-- Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, SQL-backed user authentication with protected task UI pages, multi-page UI flow (home/login/register/task/edit), comprehensive operational playbooks (playbook.md and realtime_demo_playbook.md).
+- Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, SQL-backed user authentication with protected task UI pages, multi-page UI flow (home/login/register/task/edit), comprehensive operational playbooks (playbook.md and realtime_demo_playbook.md), comprehensive test execution guide (test_execution_guide.md with 7 phases, 34 test cases, user isolation verification).
 - Task 3 Status: ✅ **COMPLETE** (Backend auth, Frontend UI, User-scoped CRUD, Integration tests all working, 6/6 tests passing)
-- Current focus: Task 4 evidence collection (screenshots) and Task 5 final integration preparation.
+- Test Documentation: ✅ **COMPLETE** (test_execution_guide.md with critical user isolation tests, cross-user protection validation, session management verification)
+- Current focus: Manual test execution (using test_execution_guide.md), evidence collection (screenshots), demo rehearsal, and Task 5 final integration preparation.
 
 ---
 

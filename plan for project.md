@@ -2,12 +2,18 @@
 
 This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 final joint task, so each group member has clear ownership while still collaborating on integration and final delivery.
 
+**Documentation Reference:**
+- **[test_execution_guide.md](test_execution_guide.md)** — Comprehensive manual testing procedures (7 phases, 34 test cases, critical user isolation validation)
+- **[playbook.md](playbook.md)** — Operational setup and deployment guide
+- **[realtime_demo_playbook.md](realtime_demo_playbook.md)** — 12-minute timed demo script
+- **[process log.md](process log.md)** — Development activity log with dated entries
+
 ## Execution Order (One by One)
 - [x] Start with Task 1 first
 - [x] Continue Task 2 after Task 1 core completion
 - [x] Finish Task 2 in-project runbook, verification, and deployment templates
-- [ ] Complete Task 3 UI design and function tests (current focus)
-- [ ] Complete Task 4 as full-team quality/documentation work
+- [x] Complete Task 3 UI design and function tests (COMPLETE - including auth backend, multi-page UI, user-scoped CRUD, comprehensive test documentation)
+- [ ] Complete Task 4 as full-team quality/documentation work (IN PROGRESS - manual testing, evidence collection, demo rehearsal)
 - [ ] Complete Task 5 as final-team integration and submission
 
 ## Task 1 - Backend API and Business Logic
