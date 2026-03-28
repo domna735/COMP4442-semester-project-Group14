@@ -438,3 +438,28 @@ Next:
 5. Prepare submission zip package with PowerPoint, Word report, and all supporting documentation
 6. Submit to Learn@PolyU by exam week deadline
 
+---
+
+## 2026-03-29 | Full Project Health Check and Final Plan Sync
+Intent:
+Run a full technical verification pass before final submission preparation and update planning documents based on objective results.
+
+Action:
+Checked repository baseline and latest commit state on `main`. Verified environment tools: Java 17 and Maven available. Executed `mvn -q clean test` for full compile and test validation. Confirmed surefire report results for both test classes:
+- `CloudComputeServiceApplicationTests`: 1 run, 0 failures, 0 errors
+- `TaskUiAndApiIntegrationTests`: 3 run, 0 failures, 0 errors
+Validated automation script syntax with `bash -n scripts/one-click-dev.sh` and `bash -n scripts/smoke-test.sh`.
+Attempted prerequisite verification for smoke runtime and found `curl` is not installed in the current local environment, so one-command runtime smoke execution is currently blocked on this machine.
+
+Result:
+Core code health is passing: build/test validation is successful and no regression was detected. Script quality check passed at syntax level. The only remaining local technical blocker for one-command runtime smoke verification is missing `curl`.
+
+Decision / Interpretation:
+The project is technically stable for submission from a code/test perspective. Final readiness work should now focus on evidence completion (manual screenshots), final `.pptx` and `.docx` artifact generation, and a last smoke run in an environment with `curl` installed.
+
+Next:
+1. Install `curl` (`sudo apt update && sudo apt install -y curl`) on demo machine and rerun `./scripts/one-click-dev.sh --stop-after-test`
+2. Complete evidence checklist items in `plan for project.md` during manual test execution
+3. Generate final PowerPoint and Word files from `ppt.md` and `report.md`
+4. Perform final Task 5 submission packaging and go/no-go verification
+

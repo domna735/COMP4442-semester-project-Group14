@@ -30,12 +30,16 @@ This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 fi
   - [x] PowerPoint presentation content (ppt.md with 10 slides + speaker notes) ✅ NEW
   - [x] Word report template (report.md with full content structure) ✅ NEW
   - [x] Presentation speaker script (ppt_script.md with full demo walkthrough) ✅ NEW
+  - [x] Full technical health check executed (`mvn clean test` pass, script syntax pass) ✅ NEW (2026-03-29)
   - 🔄 Manual testing execution (use test_execution_guide.md)
   - 🔄 Screenshot evidence collection (from manual testing)
   - 🔄 PowerPoint creation (using ppt.md as guide)
   - 🔄 Word report creation (using report.md as template)
   - 🔄 Demo rehearsal (using ppt_script.md)
 - [ ] Complete Task 5 as final-team integration and submission
+  - 🔄 Final package assembly in progress (pending `.pptx` + `.docx` final export)
+  - 🔄 Final smoke run pending on machine with `curl` installed
+  - 🔄 Final rubric go/no-go checklist pending
 
 ## Task 1 - Backend API and Business Logic
 Owner: Group Member A

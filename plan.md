@@ -5,12 +5,14 @@ This project aims to design, implement, and deploy a cloud‑based microservice 
 
 The project demonstrates the integration of modern backend development practices with cloud‑native deployment, aligning with the technologies and methodologies taught in COMP4442.
 
-### **Current Progress Snapshot (2026-03-29 - Task 3 Complete + Comprehensive Test Documentation)**
+### **Current Progress Snapshot (2026-03-29 - Full Technical Check Completed)**
 - Base setting is completed.
 - Completed items: Spring Boot baseline, Task Management CRUD APIs, OpenAPI setup, environment profiles, unified exception handling, SQL-backed user authentication with protected task UI pages, multi-page UI flow (home/login/register/task/edit), comprehensive operational playbooks (playbook.md and realtime_demo_playbook.md), comprehensive test execution guide (test_execution_guide.md with 7 phases, 34 test cases, user isolation verification).
 - Task 3 Status: ✅ **COMPLETE** (Backend auth, Frontend UI, User-scoped CRUD, Integration tests all working, 6/6 tests passing)
 - Test Documentation: ✅ **COMPLETE** (test_execution_guide.md with critical user isolation tests, cross-user protection validation, session management verification)
-- Current focus: Manual test execution (using test_execution_guide.md), evidence collection (screenshots), demo rehearsal, and Task 5 final integration preparation.
+- Full technical verification (2026-03-29): ✅ `mvn clean test` passed, ✅ automation script syntax checks passed.
+- Local runtime caveat: ⚠️ one-command smoke execution requires `curl` on the demo machine.
+- Current focus: Manual test execution (using test_execution_guide.md), evidence collection (screenshots), final `.pptx` and `.docx` creation, and Task 5 submission packaging.
 
 ---
 
@@ -162,6 +164,7 @@ Client (Browser / Postman / Swagger)
 
 ### **Phase 5 — Testing & Optimization (Week 5)**
 - [x] Start UI-based functional tests (homepage + Task CRUD API flow)  
+- [x] Automated integration tests verified (`mvn clean test` pass on 2026-03-29)  
 - Functional testing via Postman  
 - Load testing (optional)  
 - Logging and monitoring setup  
