@@ -124,3 +124,39 @@ Building DTOs separately from entities provides a clean API contract independent
 Next:
 Phase 2 complete. Ready to proceed with Phase 3 (Database Integration) and Phase 4 (Deployment). Task 1 backend work is now ready for Team Member B's AWS infrastructure setup.
 
+---
+
+## 2026-03-28 | Task 2 Kickoff - Database Integration Baseline
+Intent:
+Start Task 2 by preparing environment-specific database configuration for local development and future AWS RDS deployment.
+
+Action:
+Updated application profile configuration to explicitly separate development and production datasource behavior. Development profile now uses an in-memory H2 datasource with H2 console support and SQL logging for rapid local testing. Production profile now reads datasource URL, username, password, and JDBC driver from environment variables so the same artifact can be deployed to EC2 and connected to AWS RDS without code changes. Added runtime JDBC driver dependencies for both MySQL and PostgreSQL in Maven to support either RDS engine choice.
+
+Result:
+The project now has a clean Task 2 starting point for database integration: local development remains fast and isolated, while production settings are externalized and deployment-ready. This reduces migration risk when switching from local testing to cloud database usage.
+
+Decision / Interpretation:
+Using profile-based datasource isolation ensures environment parity while avoiding hardcoded secrets. Keeping RDS credentials in environment variables follows safer deployment practice and supports CI/CD or systemd-based runtime configuration later.
+
+Next:
+Provision AWS RDS instance and security group rules, then set EC2 environment variables (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DRIVER_CLASS_NAME`) and run end-to-end CRUD verification against the cloud database.
+
+---
+
+## 2026-03-28 | Task 2 Deployment Runbook Preparation
+Intent:
+Provide a teammate-ready, step-by-step deployment guide so Task 2 execution can be performed consistently by any member.
+
+Action:
+Updated README with a detailed AWS RDS and EC2 runbook covering: RDS creation requirements, security group rules, EC2 runtime installation, build command, production environment variable setup for MySQL/PostgreSQL, production startup command, API verification steps, and Swagger verification. Added a production `systemd` service template with environment variable wiring and restart policy to support stable EC2 operation after reboot.
+
+Result:
+Task 2 now has an executable checklist instead of high-level notes. Team members can follow the same procedure line-by-line, reducing setup variance and deployment errors. The project also has a reusable service-management template for demonstration readiness.
+
+Decision / Interpretation:
+Converting deployment knowledge into a concrete runbook improves team handoff quality and aligns with the assignment requirement for clear process traceability and reproducibility.
+
+Next:
+Execute the runbook on AWS by creating the actual RDS and EC2 resources, then complete end-to-end Task CRUD verification against the cloud database endpoint.
+

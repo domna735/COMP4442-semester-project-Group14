@@ -3,8 +3,8 @@
 This file divides the COMP4442 project into 3 main member-owned tasks, plus 2 final joint task, so each group member has clear ownership while still collaborating on integration and final delivery.
 
 ## Execution Order (One by One)
-- [x] Start with Task 1 first (current focus)
-- [ ] Continue Task 2 after Task 1 core completion
+- [x] Start with Task 1 first
+- [x] Continue Task 2 after Task 1 core completion (current focus)
 - [ ] Complete Task 3 UI design in parallel with backend stabilization
 - [ ] Complete Task 4 as full-team quality/documentation work
 - [ ] Complete Task 5 as final-team integration and submission
