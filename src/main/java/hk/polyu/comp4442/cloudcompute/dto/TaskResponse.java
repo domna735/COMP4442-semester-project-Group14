@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class TaskResponse {
 
     private Long id;
+    private String ownerUsername;
     private String title;
     private String description;
     private TaskStatus status;
@@ -19,6 +20,7 @@ public class TaskResponse {
 
     public TaskResponse(Task task) {
         this.id = task.getId();
+        this.ownerUsername = task.getUser() == null ? null : task.getUser().getUsername();
         this.title = task.getTitle();
         this.description = task.getDescription();
         this.status = task.getStatus();
@@ -36,6 +38,14 @@ public class TaskResponse {
 
     public String getTitle() {
         return title;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
 
     public void setTitle(String title) {
