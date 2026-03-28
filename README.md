@@ -6,7 +6,7 @@ Spring Boot cloud-hosted microservice project for COMP4442.
 - Phase 1 baseline setup completed
 - Phase 2 completed: Task Management CRUD APIs implemented with validation and OpenAPI docs
 - Phase 3 started: database integration baseline prepared (dev H2 + prod env-based datasource)
-- Current focus: Task 2 AWS RDS + EC2 deployment execution
+- Current focus: Task 3 UI refinement and UI-based functional testing
 
 ## Step 1 Scope
 - Create baseline Spring Boot service
@@ -204,3 +204,15 @@ Run only UI/API integration tests:
 ```bash
 mvn -Dtest=TaskUiAndApiIntegrationTests test
 ```
+
+## Task 3 UI Test Checklist (Report and Demo Evidence)
+Use this checklist to collect evidence for report/presentation artifacts.
+
+- [ ] Open UI homepage and capture screenshot of initial state
+- [ ] Create one task from UI and capture success message + updated list
+- [ ] Edit task title/description/status and capture updated row state
+- [ ] Delete task and capture list refresh after deletion
+- [ ] Apply each status filter (TODO, IN_PROGRESS, DONE) and capture filtered results
+- [ ] Trigger one validation error (empty title) and capture error message
+- [ ] Run `mvn -Dtest=TaskUiAndApiIntegrationTests test` and save passing output screenshot
+- [ ] Record date/time, tester name, environment (local or EC2), and app URL in report notes

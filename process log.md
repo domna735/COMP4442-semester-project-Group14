@@ -232,3 +232,21 @@ Pairing UI iteration with automated functional tests reduces regression risk and
 Next:
 Continue Task 3 by polishing visual details, capturing UI evidence screenshots, and adding a concise UI test checklist for Task 4 documentation.
 
+---
+
+## 2026-03-28 | Task 3 UI Evidence Checklist Added
+Intent:
+Create a compact, repeatable checklist so UI testing evidence can be collected consistently for the final report and demo.
+
+Action:
+Updated README with a dedicated Task 3 UI test checklist covering homepage, CRUD actions, status filtering, validation error capture, automated UI/API integration test execution, and evidence metadata recording (date, tester, environment, URL).
+
+Result:
+The team now has a standardized checklist to gather screenshots and proof in a consistent format for documentation and presentation.
+
+Decision / Interpretation:
+Using a shared checklist reduces missing evidence risk and keeps final report/demo artifacts aligned with implemented functionality.
+
+Next:
+Execute the checklist on local and deployed environments, then attach screenshots and test outputs to Task 4 documentation artifacts.
+
