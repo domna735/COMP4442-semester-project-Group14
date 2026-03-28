@@ -463,3 +463,31 @@ Next:
 3. Generate final PowerPoint and Word files from `ppt.md` and `report.md`
 4. Perform final Task 5 submission packaging and go/no-go verification
 
+---
+
+## 2026-03-29 | Final Smoke Verification Completed and Script Alignment
+Intent:
+Close the remaining runtime verification gap by installing missing tooling, executing one-command smoke validation, and aligning script/document expectations with current API behavior.
+
+Action:
+Installed `curl` on local Ubuntu environment and verified availability. Executed API smoke verification flow and observed one mismatch: the register endpoint returned HTTP 201 while smoke script expected HTTP 200. Confirmed backend behavior in `AuthController` uses `HttpStatus.CREATED` for register. Updated `scripts/smoke-test.sh` to expect HTTP 201 for register. Updated `README.md` and `one_command_playbook.md` expected output tables to match runtime behavior. Executed `./scripts/one-click-dev.sh --stop-after-test` successfully and confirmed all smoke checks passed. Improved `scripts/one-click-dev.sh` terminal messaging so `--stop-after-test` clearly states when app was already running and therefore not stopped by the script.
+
+Result:
+The one-command verification path is now fully operational on this machine. Smoke checks pass end-to-end with expected status codes:
+- Ping: 200
+- Register: 201
+- Login: 200
+- Me: 200
+- Create task: 201
+- List tasks: 200
+- Logout: 200
+Documentation and scripts are now consistent with actual backend API semantics.
+
+Decision / Interpretation:
+Aligning expected statuses with real API behavior improves reliability of automated checks and avoids false-negative failures during demo preparation. Messaging improvements in one-click script reduce operator confusion when port 8080 is already occupied by an existing app process.
+
+Next:
+1. Complete manual screenshot evidence checklist in `plan for project.md`
+2. Generate final `.pptx` and `.docx` artifacts from `ppt.md` and `report.md`
+3. Run final team go/no-go checklist and submit package
+
