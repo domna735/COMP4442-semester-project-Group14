@@ -1,6 +1,7 @@
 package hk.polyu.comp4442.cloudcompute;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import hk.polyu.comp4442.cloudcompute.repository.AppUserRepository;
 import hk.polyu.comp4442.cloudcompute.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -33,48 +36,66 @@ class TaskUiAndApiIntegrationTests {
     private ObjectMapper objectMapper;
 
     @Autowired
-        private TaskRepository taskRepository;
+    private TaskRepository taskRepository;
+
+    @Autowired
+    private AppUserRepository appUserRepository;
 
     @BeforeEach
     void cleanDatabase() {
         taskRepository.deleteAll();
+        appUserRepository.deleteAll();
     }
 
     @Test
-    void shouldServeUiHomepage() throws Exception {
+    void shouldServePublicPagesAndProtectTaskPage() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(forwardedUrl("index.html"));
 
         mockMvc.perform(get("/index.html"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task Board")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task Form")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Cloud Compute Task Manager")));
+
+        mockMvc.perform(get("/login.html"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/register.html"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/task.html").accept(MediaType.TEXT_HTML))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login.html"));
     }
 
     @Test
-    void shouldCreateReadUpdateAndDeleteTaskViaApiUsedByUi() throws Exception {
+    void shouldRegisterLoginAndCreateReadUpdateDeleteOwnTask() throws Exception {
+        MockHttpSession session = registerAndLogin("demo_user", "demo_user@example.com", "password123");
+
         Map<String, Object> createPayload = new HashMap<>();
         createPayload.put("title", "Prepare demo script");
         createPayload.put("description", "Finalize 12-minute demo flow");
         createPayload.put("status", "TODO");
 
         String created = mockMvc.perform(post("/api/v1/tasks")
+                        .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPayload)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.title").value("Prepare demo script"))
+                .andExpect(jsonPath("$.ownerUsername").value("demo_user"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
         Long id = objectMapper.readTree(created).get("id").asLong();
 
-        mockMvc.perform(get("/api/v1/tasks"))
+        mockMvc.perform(get("/api/v1/tasks").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(id))
-                .andExpect(jsonPath("$[0].status").value("TODO"));
+                .andExpect(jsonPath("$[0].status").value("TODO"))
+                .andExpect(jsonPath("$[0].ownerUsername").value("demo_user"));
 
         Map<String, Object> updatePayload = new HashMap<>();
         updatePayload.put("title", "Prepare demo script v2");
@@ -82,31 +103,61 @@ class TaskUiAndApiIntegrationTests {
         updatePayload.put("status", "IN_PROGRESS");
 
         mockMvc.perform(put("/api/v1/tasks/{id}", id)
+                        .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePayload)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Prepare demo script v2"))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-        mockMvc.perform(delete("/api/v1/tasks/{id}", id))
+        mockMvc.perform(delete("/api/v1/tasks/{id}", id).session(session))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/tasks/{id}", id))
+        mockMvc.perform(get("/api/v1/tasks/{id}", id).session(session))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TASK_NOT_FOUND"));
     }
 
     @Test
-    void shouldRejectInvalidTaskCreation() throws Exception {
+    void shouldRejectInvalidTaskCreationForAuthenticatedUser() throws Exception {
+        MockHttpSession session = registerAndLogin("validation_user", "validation_user@example.com", "password123");
+
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", "");
         payload.put("description", "bad title");
         payload.put("status", "TODO");
 
         mockMvc.perform(post("/api/v1/tasks")
+                        .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    private MockHttpSession registerAndLogin(String username, String email, String password) throws Exception {
+        Map<String, Object> registerPayload = new HashMap<>();
+        registerPayload.put("username", username);
+        registerPayload.put("email", email);
+        registerPayload.put("password", password);
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerPayload)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.user.username").value(username));
+
+        Map<String, Object> loginPayload = new HashMap<>();
+        loginPayload.put("username", username);
+        loginPayload.put("password", password);
+
+        return (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginPayload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username").value(username))
+                .andReturn()
+                .getRequest()
+                .getSession(false);
     }
 }
