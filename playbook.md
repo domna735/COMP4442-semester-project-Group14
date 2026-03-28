@@ -3,6 +3,7 @@
 This document provides a comprehensive step-by-step guide to set up, configure, and run the Cloud Compute Service application from scratch.
 
 **Related Documentation:**
+- **[one_command_playbook.md](one_command_playbook.md)** — Quickest one-command local setup and one-command API smoke test guide
 - **[test_execution_guide.md](test_execution_guide.md)** — Complete manual testing procedures with 7 phases, 34 test cases, and critical user isolation verification (START HERE FOR TESTING)
 - **[realtime_demo_playbook.md](realtime_demo_playbook.md)** — 12-minute timed demonstration script for live presentation
 - **[README.md](README.md)** — Quick-start guide and API overview

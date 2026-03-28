@@ -2,6 +2,39 @@
 
 Spring Boot cloud-hosted microservice project for COMP4442.
 
+## Easy Setup (One Command)
+
+For local development, you can run everything with one script (H2 in-memory DB, no external DB setup required).
+
+Prerequisites:
+- Java 17+
+- Maven 3.8+
+- curl
+
+```bash
+chmod +x scripts/one-click-dev.sh scripts/smoke-test.sh
+./scripts/one-click-dev.sh
+```
+
+This script will:
+- Start the Spring Boot app on `http://localhost:8080`
+- Wait for health endpoint readiness
+- Run API smoke tests automatically (register, login, me, create task, list tasks, logout)
+
+Detailed quick guide: [one_command_playbook.md](one_command_playbook.md)
+
+Optional:
+
+```bash
+./scripts/one-click-dev.sh --stop-after-test
+```
+
+If server is already running, test only:
+
+```bash
+./scripts/smoke-test.sh
+```
+
 ## Current Progress
 - Phase 1 baseline setup completed
 - Phase 2 completed: Task Management CRUD APIs implemented with validation and OpenAPI docs
@@ -202,6 +235,29 @@ mvn spring-boot:run
 Then open `http://localhost:8080/api/v1/compute/ping`.
 
 Open Swagger UI at `http://localhost:8080/swagger-ui/index.html`.
+
+## Easy Test Flow (Recommended)
+
+### 1) Fast API verification (auto)
+
+```bash
+./scripts/one-click-dev.sh --stop-after-test
+```
+
+Expected pass checks:
+- `GET /api/v1/compute/ping` → 200
+- `POST /api/v1/auth/register` → 200
+- `POST /api/v1/auth/login` → 200
+- `GET /api/v1/auth/me` → 200
+- `POST /api/v1/tasks` → 201
+- `GET /api/v1/tasks` → 200
+- `POST /api/v1/auth/logout` → 200
+
+### 2) UI/manual verification (for screenshots and demo)
+- Start app: `mvn spring-boot:run`
+- Open `http://localhost:8080`
+- Follow `test_execution_guide.md` phase-by-phase
+- Capture evidence screenshots required in this README and `plan for project.md`
 
 ## Test
 ```bash
