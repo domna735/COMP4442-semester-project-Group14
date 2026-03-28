@@ -89,6 +89,53 @@ Owner: Group Member C
 
 ---
 
+## **Auth + UI Evidence Checklist (For Task 4 Screenshot Collection)**
+
+This checklist documents all required evidence artifacts for auth flow and protected UI demonstration:
+
+### Login & Registration Flow
+- [ ] **Register Form Screenshot** — Registration page with username/email/password inputs
+- [ ] **Register Success Screenshot** — Redirect to login page after successful registration
+- [ ] **Register Validation Error** — Error message when username/email already exists or password is weak
+- [ ] **Login Form Screenshot** — Login page with username/password inputs and submit button
+- [ ] **Login Success Screenshot** — Display logged-in user name and redirect to task page
+- [ ] **Login Failure Screenshot** — Error message for invalid credentials (401 response shown)
+
+### Protected Pages & Redirects
+- [ ] **Protected Task Page (Authenticated)** — Task page displaying after successful login with "Signed in as [username]"
+- [ ] **Protected Task Page (Unauthenticated)** — Redirect to login.html when accessing /task.html without session
+- [ ] **Protected Edit Page (Authenticated)** — Edit page for a single task with pre-populated form
+- [ ] **Protected Edit Page (Unauthenticated)** — Redirect to login.html when accessing /edit.html without session
+
+### User-Scoped Task Management
+- [ ] **User A Task List** — Screenshot showing User A's task list only (logged in as User A)
+- [ ] **User B Task List** — Screenshot showing User B's task list only (logged in as User B), different tasks from User A
+- [ ] **Cross-User Isolation Test** — Demonstrate User A cannot see/access User B's tasks via direct URL or API
+- [ ] **Create Task (User-Scoped)** — Screenshot of create task form submission showing task assigned to current user
+- [ ] **Task Owner Field** — Screenshot showing "ownerUsername" field in task list matches logged-in user
+
+### Task CRUD Operations (With Auth)
+- [ ] **Create Task Success** — New task created and appears in logged-in user's list
+- [ ] **Edit Task Form** — Populate edit form fields from existing task (get by taskId + userId)
+- [ ] **Update Task Success** — Update task title/description and verify changes persisted
+- [ ] **Delete Task Confirmation** — Delete button removes task from logged-in user's list
+- [ ] **Task Not Found (After Delete)** — Attempt to view deleted task returns 404 error
+
+### Session & Logout
+- [ ] **Logout Button Click** — Logout clears session and redirects to login page
+- [ ] **Session Expiration** — After logout, accessing task.html redirects to login.html (session cleared)
+- [ ] **Session Persistence** — Navigating back/forward maintains logged-in session without re-login
+
+### API Response Examples
+- [ ] **POST /api/v1/auth/register Response** — Response body showing userId, username, email, token/session
+- [ ] **POST /api/v1/auth/login Response** — Successful login response with session/auth token
+- [ ] **GET /api/v1/auth/me Response** — Current authenticated user info (id, username, email, role)
+- [ ] **POST /api/v1/tasks Response** — Task creation shows task assigned to authenticated user's ID
+- [ ] **GET /api/v1/tasks Response** — Task list filtered by authenticated user (no other user's tasks)
+- [ ] **401 Unauthorized Response** — Error response when accessing protected endpoint without auth
+
+---
+
 ## Task 4 - Testing, Documentation, and Presentation Package
 Owner: All Group Members (Joint Completion)
 

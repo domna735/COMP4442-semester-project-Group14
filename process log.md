@@ -268,3 +268,21 @@ Adding authentication at this stage increases practical cloud-demo value and bet
 Next:
 Continue Task 3 by polishing UI details, capturing screenshots for each page/state, and extending test evidence for final Task 4 report package.
 
+---
+
+## 2026-03-28 | Task 3 Extension - Section Commits, Evidence Checklist, Playbooks
+Intent:
+Complete Task 3 by committing all auth/UI changes in logical sections, creating an audit/evidence checklist for Task 4, and producing operational playbooks for deployment and live demo.
+
+Action:
+Executed 7 sequential git commits organizing: (1) core auth backend, (2) task ownership scoping, (3) exception handling, (4) frontend pages, (5) pom.xml dependency, (6) documentation updates, (7) test updates. Added comprehensive "Auth + UI Evidence Checklist" section to `plan for project.md` covering registration flow, protected pages, user isolation, task CRUD operations, session management, and API response examples. Created `playbook.md` with complete operational guide including prerequisites, environment setup, database configuration (H2 dev / MySQL-PostgreSQL prod), build commands, multiple run options (IDE, CLI, JAR, systemd), full API endpoint reference, authentication/task flow examples, and troubleshooting guide. Created `realtime_demo_playbook.md` with timed 12-minute demonstration script covering auth registration, login/session, task CRUD, cross-user isolation, update/delete operations, API documentation review, plus presenter notes and quick reference.
+
+Result:
+Task 3 is now complete with clean git history (7 focused commits), comprehensive evidence templates for Task 4, full operational documentation for any team member to set up/run/deploy, and a polished demo script ready for presentation rehearsal. All 6 integration tests passing, no compilation errors.
+
+Decision / Interpretation:
+Separating commits by concern improves code review clarity and GitHub trace quality. Playbooks and checklists reduce documentation effort during final report writing and improve team handoff consistency.
+
+Next:
+Task 4: Execute evidence checklist to collect auth/UI screenshots, run demo playbook for rehearsal, prepare Task 4 final report/presentation package with evidence artifacts.
+
