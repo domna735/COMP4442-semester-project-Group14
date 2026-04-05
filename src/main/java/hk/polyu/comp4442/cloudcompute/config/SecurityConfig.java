@@ -24,6 +24,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -37,6 +38,7 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/task.html",
                                 "/edit.html", // add this to allow JWT work
+                                "/api/v1/auth/refresh", // add refresh end point
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/compute/**",
@@ -49,10 +51,13 @@ public class SecurityConfig {
                         .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     String uri = request.getRequestURI();
-                    if (uri.startsWith("/api/")) {
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                    } else {
+                    if (uri.endsWith(".html") && !uri.equals("/login.html")) {
+                        // redirect to login page
                         response.sendRedirect("/login.html");
+                    } else {
+                        // API calls return 401 such auth.js can refresh
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("{\"error\": \"Unauthorized\"}");
                     }
                 }));
 

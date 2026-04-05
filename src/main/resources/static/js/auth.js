@@ -7,3 +7,41 @@ function getAuthHeaders() {
         "Content-Type": "application/json"
       };
     }
+
+    async function authFetch(url, options = {}) {
+    let accessToken = localStorage.getItem("accessToken");
+
+    options.headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+    };
+
+    let response = await fetch(url, options);
+
+    // If Access Token is expired
+    if (response.status === 401) {
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        const refreshRes = await fetch("/api/v1/auth/refresh", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refreshToken: refreshToken })
+        });
+
+        if (refreshRes.ok) {
+            const data = await refreshRes.json();
+            // Save NEW access token
+            localStorage.setItem("accessToken", data.accessToken);
+            
+            // Retry the original request with the new token
+            options.headers['Authorization'] = `Bearer ${data.accessToken}`;
+            return fetch(url, options); 
+        } else {
+            // Both tokens failed -> Logout
+            localStorage.clear();
+            window.location.href = "/login.html";
+        }
+    }
+    return response;
+}

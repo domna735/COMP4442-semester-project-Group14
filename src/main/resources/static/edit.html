@@ -135,20 +135,34 @@
 
 
     async function ensureAuth() {
-      const res = await fetch("/api/v1/auth/me", { headers: getAuthHeaders() });
-      if (!res.ok) {
-        window.location.href = "/login.html";
-        throw new Error("Not authenticated");
-      }
+    try {
+        const res = await authFetch("/api/v1/auth/me");
+async function ensureAuth() {
+    try {
+        const res = await authFetch("/api/v1/auth/me");
+        // If we reach here and res is NOT ok, authFetch already handled the redirect
+        if (res.ok) {
+            const user = await res.json();
+            if (userLabel) userLabel.textContent = `Signed in as ${user.username}`;
+        }
+    } catch (err) {
+        console.error("Auth check failed", err);
     }
-
+}        if (res.ok) {
+            const user = await res.json();
+            if (userLabel) userLabel.textContent = `Signed in as ${user.username}`;
+        }
+    } catch (err) {
+        console.error("Auth check failed", err);
+    }
+}
     async function loadTask() {
       if (!taskId) {
         setStatus("Missing task id in URL.", "err");
         return;
       }
 
-      const res = await fetch(`/api/v1/tasks/${taskId}`, { headers: getAuthHeaders() });
+      const res = await authFetch(`/api/v1/tasks/${taskId}`);
       if (!res.ok) {
         setStatus("Cannot load task.", "err");
         return;
@@ -173,9 +187,8 @@
         status: document.getElementById("status").value
       };
 
-      const res = await fetch(`/api/v1/tasks/${taskId}`, {
+      const res = await authFetch(`/api/v1/tasks/${taskId}`, {
         method: "PUT",
-        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 

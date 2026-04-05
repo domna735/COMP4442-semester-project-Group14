@@ -7,14 +7,16 @@ public class AuthResponse {
     private String message;
     private AuthUserResponse user;
     private String accessToken;
+    private String refreshToken;
     private LocalDateTime timestamp;
 
     public AuthResponse() {
     }
 
-    public AuthResponse(String message, String accessToken, AuthUserResponse user) {
+    public AuthResponse(String message, String accessToken, String refreshToken, AuthUserResponse user) {
         this.message = message;
         this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         this.user = user;
         this.timestamp = LocalDateTime.now();
     }
@@ -49,12 +51,20 @@ public class AuthResponse {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
-    
+
     public String getAccessToken() {
         return accessToken;
     }
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

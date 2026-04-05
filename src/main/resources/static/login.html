@@ -113,7 +113,7 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await res.json(); 
+        const data = await res.json();
 
         if (!res.ok) {
           // display error message 
@@ -125,12 +125,22 @@
 
         if (data.accessToken) {
           localStorage.setItem("accessToken", data.accessToken);
+
+        }
+        if (data.refreshToken) {
+          localStorage.setItem("refreshToken", data.refreshToken);
+
+        }
+        if (data.user && data.user.username) {
+          localStorage.setItem("username", data.user.username);
+          localStorage.setItem("role", data.user.role);
+          localStorage.setItem("userId", data.user.id);
         }
 
         statusEl.className = "status ok";
         statusEl.textContent = "Login successful. Redirecting...";
 
-  
+
         setTimeout(() => {
           window.location.href = "/task.html";
         }, 600);

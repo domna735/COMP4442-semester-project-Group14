@@ -15,6 +15,7 @@ import java.util.Base64;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 @Component
 public class JwtUtils {
 
@@ -87,5 +88,19 @@ public class JwtUtils {
             logger.error("Unexpected error validating JWT: {}", e.getMessage());
         }
         return false;
+    }
+
+    public String generateTokenFromUsername(String username) {
+        try {
+            return Jwts.builder()
+                    .subject(username)
+                    .issuedAt(new Date())
+                    .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                    .signWith(getPrivateKey()) // Signs with ECDSA Private Key
+                    .compact();
+        } catch (Exception e) {
+            logger.error("Could not generate token: {}", e.getMessage());
+            return null;
+        }
     }
 }

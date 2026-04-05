@@ -16,25 +16,9 @@ Then move the generaet key file:
 
 into src/main:
 
-📦main
- ┣ 📂java
- ┃ ┗ project
 
- ┗ 📂resources
- ┃ ┣ 📂cert
- ┃ ┃ ┣ 📜ECDSA_384_private.pem <--
- ┃ ┃ ┗ 📜ECDSA_384_public.pem <--
- ┃ ┣ 📂static
- ┃ ┃ ┣ 📂js
- ┃ ┃ ┃ ┗ 📜auth.js
- ┃ ┃ ┣ 📜edit.html
- ┃ ┃ ┣ 📜index.html
- ┃ ┃ ┣ 📜login.html
- ┃ ┃ ┣ 📜register.html
- ┃ ┃ ┗ 📜task.html
- ┃ ┣ 📜application-dev.properties
- ┃ ┣ 📜application-prod.properties
- ┃ ┗ 📜application.properties
+<pre id="tree-panel"><bold><span class="t-icon" name="icons">📦</span>resources</bold><br/> ┣ <span class="t-icon" name="icons">📂</span>cert<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>ECDSA_384_private.pem <---<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>ECDSA_384_public.pem <---<br/> ┣ <span class="t-icon" name="icons">📂</span>static<br/> ┃ ┣ <span class="t-icon" name="icons">📂</span>js<br/> ┃ ┃ ┗ <span class="t-icon" name="icons">📜</span>auth.js<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>edit.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>index.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>login.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>register.html<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>task.html<br/> ┣ <span class="t-icon" name="icons">📜</span>application-dev.properties<br/> ┣ <span class="t-icon" name="icons">📜</span>application-prod.properties<br/> ┗ <span class="t-icon" name="icons">📜</span>application.properties</pre>
+
 
 
 Prerequisites:

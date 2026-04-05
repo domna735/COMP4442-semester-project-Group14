@@ -5,12 +5,12 @@ import hk.polyu.comp4442.cloudcompute.dto.AuthUserResponse;
 import hk.polyu.comp4442.cloudcompute.dto.LoginRequest;
 import hk.polyu.comp4442.cloudcompute.dto.RegisterRequest;
 import hk.polyu.comp4442.cloudcompute.entity.AppUser;
+import hk.polyu.comp4442.cloudcompute.entity.RefreshToken;
 import hk.polyu.comp4442.cloudcompute.repository.AppUserRepository;
 import hk.polyu.comp4442.cloudcompute.security.CustomUserDetails;
 import hk.polyu.comp4442.cloudcompute.security.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,16 +25,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthService(
             AppUserRepository appUserRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            JwtUtils jwtUtils) {
+            JwtUtils jwtUtils, RefreshTokenService refreshTokenService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public AppUser register(RegisterRequest request) {
@@ -54,30 +56,23 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        } catch (Exception ex) {
-            throw new BadCredentialsException("Invalid username or password.");
-        }
+        // Authenticate with exist method
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        String jwt;
-        try {
-            jwt = jwtUtils.generateToken(authentication);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generating access token", e);
-        }
-
-        // Return the Custom DTO containing the token
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        // This matches the 3-argument constructor in the record above
+        // Generate Access Token
+        String accessToken = jwtUtils.generateTokenFromUsername(userDetails.getUsername());
+
+        // Generate Refresh Token in DB
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId());
+
+        // Return the message using the fixed constructor
         return new AuthResponse(
-                "Login successful",
-                jwt,
+                "Login successful.",
+                accessToken,
+                refreshToken.getToken(),
                 new AuthUserResponse(userDetails.getUser()));
     }
 
@@ -87,4 +82,9 @@ public class AuthService {
             new SecurityContextLogoutHandler().logout(httpRequest, null, authentication);
         }
     }
+
+    public String generateAccessToken(String username) {
+        return jwtUtils.generateTokenFromUsername(username);
+    }
+
 }

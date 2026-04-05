@@ -363,19 +363,20 @@
 
 
     async function ensureAuth() {
-      const res = await fetch("/api/v1/auth/me", { headers: getAuthHeaders() });
+    try {
+        const res = await authFetch("/api/v1/auth/me");
 
-      if (!res.ok) {
-        localStorage.removeItem("accessToken");
-        window.location.href = "/login.html";
-        throw new Error("Not authenticated");
-      }
-      const user = await res.json();
-      userLabel.textContent = `Signed in as ${user.username}`;
+        if (res.ok) {
+            const user = await res.json();
+            if (userLabel) userLabel.textContent = `Signed in as ${user.username}`;
+        }
+    } catch (err) {
+        console.error("Auth check failed", err);
     }
+}
 
     async function loadTasks() {
-      const res = await fetch(apiBase, { headers: getAuthHeaders() });
+      const res = await authFetch(apiBase, );
       if (!res.ok) {
         throw new Error("Failed to load tasks");
       }
@@ -464,9 +465,8 @@
       if (!confirm(`Delete task #${id}?`)) {
         return;
       }
-      const res = await fetch(`${apiBase}/${id}`, {
+      const res = await authFetch(`${apiBase}/${id}`, {
         method: "DELETE",
-        headers: getAuthHeaders()
       });
       if (!res.ok) {
         setStatus(`Delete failed for task #${id}`, "err");
@@ -485,9 +485,8 @@
         status: statusInput.value
       };
 
-      const res = await fetch(apiBase, {
+      const res = await authFetch(apiBase, {
         method: "POST",
-        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -513,7 +512,8 @@
     });
 
     document.getElementById("logout-btn").addEventListener("click", async () => {
-      await fetch("/api/v1/auth/logout", { method: "POST", headers: getAuthHeaders() });
+      await authFetch("/api/v1/auth/logout", { method: "POST"});
+      localStorage.clear();
       window.location.href = "/login.html";
     });
 
