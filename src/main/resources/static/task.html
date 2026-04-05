@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,7 +18,9 @@
       --warn: #b45309;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -53,8 +56,15 @@
       flex-wrap: wrap;
     }
 
-    .hero h1 { margin: 0 0 8px; font-size: clamp(1.2rem, 2.5vw, 1.8rem); }
-    .hero p { margin: 0; opacity: 0.95; }
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.95;
+    }
 
     .mini-btn {
       border: 0;
@@ -80,11 +90,26 @@
       font-weight: 700;
     }
 
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #facc15; }
-    .dot.ok { background: #86efac; }
-    .dot.err { background: #fecaca; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #facc15;
+    }
 
-    .grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+    .dot.ok {
+      background: #86efac;
+    }
+
+    .dot.err {
+      background: #fecaca;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 16px;
+    }
 
     .panel {
       background: var(--panel);
@@ -94,11 +119,27 @@
       box-shadow: 0 10px 24px rgba(16, 24, 40, 0.06);
     }
 
-    h2 { margin: 0 0 10px; font-size: 1.05rem; color: var(--accent-2); }
-    .field { margin-bottom: 10px; display: grid; gap: 6px; }
-    label { font-size: 0.85rem; font-weight: 700; color: #334155; }
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: var(--accent-2);
+    }
 
-    input, textarea, select {
+    .field {
+      margin-bottom: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input,
+    textarea,
+    select {
       width: 100%;
       border: 1px solid #c8d7c8;
       border-radius: 9px;
@@ -107,8 +148,16 @@
       background: #fcfffc;
     }
 
-    textarea { min-height: 90px; resize: vertical; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
     button {
       border: 0;
@@ -119,17 +168,50 @@
       cursor: pointer;
     }
 
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-ghost { background: #eaf8f6; color: #0f766e; }
-    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
 
-    .hint { margin-top: 8px; font-size: 0.84rem; color: #475569; }
-    .status { min-height: 24px; margin-top: 8px; font-size: 0.9rem; font-weight: 700; }
-    .ok { color: var(--ok); }
-    .err { color: var(--danger); }
-    .warn { color: var(--warn); }
+    .btn-ghost {
+      background: #eaf8f6;
+      color: #0f766e;
+    }
 
-    .task-list { display: grid; gap: 10px; }
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 0.84rem;
+      color: #475569;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .ok {
+      color: var(--ok);
+    }
+
+    .err {
+      color: var(--danger);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    .task-list {
+      display: grid;
+      gap: 10px;
+    }
 
     .task-item {
       border: 1px solid var(--line);
@@ -138,7 +220,12 @@
       background: #fcfffc;
     }
 
-    .task-top { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+    .task-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
 
     .pill {
       display: inline-block;
@@ -149,16 +236,38 @@
       border: 1px solid transparent;
     }
 
-    .pill.todo { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
-    .pill.in-progress { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
-    .pill.done { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-    .meta { margin-top: 8px; color: #64748b; font-size: 0.78rem; }
+    .pill.todo {
+      background: #e5e7eb;
+      color: #374151;
+      border-color: #d1d5db;
+    }
+
+    .pill.in-progress {
+      background: #fff7ed;
+      color: #9a3412;
+      border-color: #fed7aa;
+    }
+
+    .pill.done {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .meta {
+      margin-top: 8px;
+      color: #64748b;
+      font-size: 0.78rem;
+    }
 
     @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
+      .grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
   <main class="page">
     <section class="hero">
@@ -172,7 +281,8 @@
           <button class="mini-btn" id="logout-btn" type="button">Logout</button>
         </div>
       </div>
-      <div class="health" id="api-health"><span class="dot" id="api-dot"></span><span id="api-text">Checking API...</span></div>
+      <div class="health" id="api-health"><span class="dot" id="api-dot"></span><span id="api-text">Checking
+          API...</span></div>
     </section>
 
     <section class="grid">
@@ -223,7 +333,7 @@
       </article>
     </section>
   </main>
-
+  <script src="/js/auth.js"></script>
   <script>
     const apiBase = "/api/v1/tasks";
     const form = document.getElementById("task-form");
@@ -251,9 +361,12 @@
       apiText.textContent = text;
     }
 
+
     async function ensureAuth() {
-      const res = await fetch("/api/v1/auth/me");
+      const res = await fetch("/api/v1/auth/me", { headers: getAuthHeaders() });
+
       if (!res.ok) {
+        localStorage.removeItem("accessToken");
         window.location.href = "/login.html";
         throw new Error("Not authenticated");
       }
@@ -262,7 +375,7 @@
     }
 
     async function loadTasks() {
-      const res = await fetch(apiBase);
+      const res = await fetch(apiBase, { headers: getAuthHeaders() });
       if (!res.ok) {
         throw new Error("Failed to load tasks");
       }
@@ -351,7 +464,10 @@
       if (!confirm(`Delete task #${id}?`)) {
         return;
       }
-      const res = await fetch(`${apiBase}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${apiBase}/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders()
+      });
       if (!res.ok) {
         setStatus(`Delete failed for task #${id}`, "err");
         return;
@@ -371,7 +487,7 @@
 
       const res = await fetch(apiBase, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -397,7 +513,7 @@
     });
 
     document.getElementById("logout-btn").addEventListener("click", async () => {
-      await fetch("/api/v1/auth/logout", { method: "POST" });
+      await fetch("/api/v1/auth/logout", { method: "POST", headers: getAuthHeaders() });
       window.location.href = "/login.html";
     });
 
@@ -414,4 +530,5 @@
     })();
   </script>
 </body>
+
 </html>

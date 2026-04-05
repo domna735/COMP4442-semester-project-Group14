@@ -4,3 +4,7 @@ target/
 *.iml
 *.log
 .DS_Store
+
+deploy/keys/*.pem
+
+*.pem

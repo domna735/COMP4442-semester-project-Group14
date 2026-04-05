@@ -37,10 +37,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        AppUser loggedIn = authService.login(request, httpRequest);
-        AuthResponse response = new AuthResponse("Login successful.", new AuthUserResponse(loggedIn));
-        return ResponseEntity.ok(response);
-    }
+    AuthResponse response = authService.login(request, httpRequest);
+    return ResponseEntity.ok(response);
+}
 
     @PostMapping("/logout")
     public ResponseEntity<AuthResponse> logout(HttpServletRequest httpRequest) {

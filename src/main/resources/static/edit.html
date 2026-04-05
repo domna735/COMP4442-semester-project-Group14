@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,6 +16,7 @@
       color: #1f2a1f;
       padding: 20px;
     }
+
     .card {
       width: min(620px, 96vw);
       background: #fff;
@@ -23,18 +25,41 @@
       padding: 20px;
       box-shadow: 0 14px 32px rgba(16, 24, 40, 0.12);
     }
-    h1 { margin-top: 0; color: #14532d; }
-    .field { display: grid; gap: 6px; margin-bottom: 10px; }
-    input, textarea, select {
+
+    h1 {
+      margin-top: 0;
+      color: #14532d;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    input,
+    textarea,
+    select {
       border: 1px solid #c8d7c8;
       border-radius: 9px;
       padding: 10px;
       font: inherit;
       width: 100%;
     }
-    textarea { min-height: 90px; resize: vertical; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    button, a {
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button,
+    a {
       border: 0;
       border-radius: 9px;
       padding: 10px 14px;
@@ -42,13 +67,33 @@
       text-decoration: none;
       cursor: pointer;
     }
-    .primary { background: #0f766e; color: #fff; }
-    .ghost { background: #eaf8f6; color: #0f766e; }
-    .status { min-height: 22px; margin-top: 8px; font-size: 0.9rem; }
-    .err { color: #b91c1c; }
-    .ok { color: #166534; }
+
+    .primary {
+      background: #0f766e;
+      color: #fff;
+    }
+
+    .ghost {
+      background: #eaf8f6;
+      color: #0f766e;
+    }
+
+    .status {
+      min-height: 22px;
+      margin-top: 8px;
+      font-size: 0.9rem;
+    }
+
+    .err {
+      color: #b91c1c;
+    }
+
+    .ok {
+      color: #166534;
+    }
   </style>
 </head>
+
 <body>
   <main class="card">
     <h1>Edit Page</h1>
@@ -76,7 +121,7 @@
     </form>
     <div id="status-msg" class="status"></div>
   </main>
-
+  <script src="/js/auth.js"></script>
   <script>
     const statusMsg = document.getElementById("status-msg");
     const taskId = new URLSearchParams(window.location.search).get("id");
@@ -86,8 +131,11 @@
       statusMsg.className = "status " + level;
     }
 
+    
+
+
     async function ensureAuth() {
-      const res = await fetch("/api/v1/auth/me");
+      const res = await fetch("/api/v1/auth/me", { headers: getAuthHeaders() });
       if (!res.ok) {
         window.location.href = "/login.html";
         throw new Error("Not authenticated");
@@ -100,7 +148,7 @@
         return;
       }
 
-      const res = await fetch(`/api/v1/tasks/${taskId}`);
+      const res = await fetch(`/api/v1/tasks/${taskId}`, { headers: getAuthHeaders() });
       if (!res.ok) {
         setStatus("Cannot load task.", "err");
         return;
@@ -127,7 +175,7 @@
 
       const res = await fetch(`/api/v1/tasks/${taskId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
       });
 
@@ -149,4 +197,5 @@
     })();
   </script>
 </body>
+
 </html>

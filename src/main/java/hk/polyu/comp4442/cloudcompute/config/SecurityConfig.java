@@ -10,15 +10,23 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import hk.polyu.comp4442.cloudcompute.security.AuthTokenFilter;
 
 @Configuration
 public class SecurityConfig {
 
     @Bean
+    public AuthTokenFilter authTokenFilter() {
+        return new AuthTokenFilter();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
+        http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
@@ -26,25 +34,30 @@ public class SecurityConfig {
                                 "/home.html",
                                 "/login.html",
                                 "/register.html",
+                                "/js/**",
+                                "/task.html",
+                                "/edit.html", // add this to allow JWT work
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/compute/**",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/auth/me", "/api/v1/auth/logout").authenticated()
-                        .anyRequest().permitAll()
-                )
+                                "/v3/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/auth/me",
+                                "/api/v1/auth/logout")
+                        .authenticated()
+                        .anyRequest().permitAll())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     String uri = request.getRequestURI();
-                    boolean htmlPage = uri.endsWith(".html") || "/task.html".equals(uri) || "/edit.html".equals(uri);
-                    if (htmlPage) {
-                        response.sendRedirect("/login.html");
-                    } else {
+                    if (uri.startsWith("/api/")) {
                         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                    } else {
+                        response.sendRedirect("/login.html");
                     }
-                }))
-                .build();
+                }));
+
+        http.addFilterBefore(authTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        return http.build();
     }
 
     @Bean
@@ -53,7 +66,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 }
