@@ -5,6 +5,12 @@ target/
 *.log
 .DS_Store
 
-deploy/keys/*.pem
 
+#ECDSA key pair
+deploy/keys/*.pem
 *.pem
+
+#upload file
+uploads/*
+# sqlite database
+*.db

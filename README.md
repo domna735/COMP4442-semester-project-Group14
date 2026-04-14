@@ -4,7 +4,6 @@ Spring Boot cloud-hosted microservice project for COMP4442.
 
 ## Easy Setup (One Command)
 
-
 To start with, the JWT middle ware require the ecdsa key:
 
 <pre id="tree-panel"><bold><span class="t-icon" name="icons">📦</span>deploy</bold><br/> ┣ <span class="t-icon" name="icons">📂</span>ec2<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>.env.prod.example<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>run-prod.sh<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>verify-deploy.sh<br/> ┣ <span class="t-icon" name="icons">📂</span>keys<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>key.sh <-- run the script to generate ecdsa key pair</pre>
@@ -15,11 +14,9 @@ Then move the generaet key file:
 
 into src/main:
 
-
 <pre id="tree-panel"><bold><span class="t-icon" name="icons">📦</span>resources</bold><br/> ┣ <span class="t-icon" name="icons">📂</span>cert<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>ECDSA_384_private.pem <---<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>ECDSA_384_public.pem <---<br/> ┣ <span class="t-icon" name="icons">📂</span>static<br/> ┃ ┣ <span class="t-icon" name="icons">📂</span>js<br/> ┃ ┃ ┗ <span class="t-icon" name="icons">📜</span>auth.js<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>edit.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>index.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>login.html<br/> ┃ ┣ <span class="t-icon" name="icons">📜</span>register.html<br/> ┃ ┗ <span class="t-icon" name="icons">📜</span>task.html<br/> ┣ <span class="t-icon" name="icons">📜</span>application-dev.properties<br/> ┣ <span class="t-icon" name="icons">📜</span>application-prod.properties<br/> ┗ <span class="t-icon" name="icons">📜</span>application.properties</pre>
 
-For local development, you can run everything with one script (H2 in-memory DB, no external DB setup required).
-
+For local development, you can run everything with one script (sqlite as default database).
 
 Prerequisites:
 
@@ -56,7 +53,7 @@ If server is already running, test only:
 
 - Phase 1 baseline setup completed
 - Phase 2 completed: Task Management CRUD APIs implemented with validation and OpenAPI docs
-- Phase 3 started: database integration baseline prepared (dev H2 + prod env-based datasource)
+- Phase 3 started: database integration baseline prepared (dev sqlite database + prod env-based datasource)
 - Current focus: Task 3 UI multi-page flow with SQL-backed user authentication and protected task management
 
 ## Step 1 Scope
@@ -106,7 +103,7 @@ Execute the following in order.
 
 1. Create an AWS RDS instance.
 
-- Engine: MySQL 8.x or PostgreSQL 15+
+- Engine: default as sqlite, optinal MySQL 8.x or PostgreSQL 15+
 - Public access: enabled (for project testing)
 - Note endpoint, port, DB name, username, and password
 
@@ -132,6 +129,7 @@ mvn clean package -DskipTests
 
 5. Set production datasource variables on EC2.
 
+- The system use sqlite as default database, when not database provide
 - For MySQL example:
 
 ```bash

@@ -43,7 +43,33 @@ require_cmd() {
     exit 1
   fi
 }
+# Now 
+prepare_env() {
+  echo "Checking security keys..."
+  # Create the cert directory if it doesn't exist in src/main/resources
+  mkdir -p "$ROOT_DIR/src/main/resources/cert"
 
+  # If keys don't exist in resources, try to copy them from the deploy folder
+  if [[ ! -f "$ROOT_DIR/src/main/resources/cert/ECDSA_384_private.pem" ]]; then
+    if [[ -f "$ROOT_DIR/deploy/keys/ECDSA_384_private.pem" ]]; then
+      echo "Copying keys from deploy/keys to resources/cert..."
+      cp "$ROOT_DIR/deploy/keys/ECDSA_384_*.pem" "$ROOT_DIR/src/main/resources/cert/"
+    else
+      echo "[WARN] Keys not found. Generating new ones..."
+      chmod +x "$ROOT_DIR/deploy/keys/key.sh"
+      (cd "$ROOT_DIR/deploy/keys" && ./key.sh)
+      cp "$ROOT_DIR/deploy/keys/ECDSA_384_*.pem" "$ROOT_DIR/src/main/resources/cert/"
+    fi
+  fi
+
+  #Clear the SQLite DB for a smoke test
+  if [[ "$STOP_AFTER_TEST" -eq 1 ]]; then
+     echo "Cleaning old SQLite database for a fresh test..."
+     rm -f "$ROOT_DIR/comp4442.db"
+  fi
+
+}
+prepare_env
 is_up() {
   local code
   code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/compute/ping" || true)
@@ -63,9 +89,18 @@ wait_for_server() {
 }
 
 cleanup() {
-  if [[ "$STOP_AFTER_TEST" -eq 1 && "$STARTED_BY_SCRIPT" -eq 1 && -n "$APP_PID" ]]; then
-    echo "Stopping Spring Boot process (PID: $APP_PID)..."
-    kill "$APP_PID" >/dev/null 2>&1 || true
+  if [[ "$STOP_AFTER_TEST" -eq 1 ]]; then
+    # Find the actual Java process ID listening on port 8080
+    local REAL_PID
+    REAL_PID=$(lsof -t -i:8080 || echo "")
+
+    if [[ -n "$REAL_PID" ]]; then
+      echo "Stopping Spring Boot process on port 8080 (PID: $REAL_PID)..."
+      kill -9 "$REAL_PID" >/dev/null 2>&1 || true
+    elif [[ -n "$APP_PID" ]]; then
+      echo "Stopping parent process (PID: $APP_PID)..."
+      kill "$APP_PID" >/dev/null 2>&1 || true
+    fi
   fi
 }
 trap cleanup EXIT

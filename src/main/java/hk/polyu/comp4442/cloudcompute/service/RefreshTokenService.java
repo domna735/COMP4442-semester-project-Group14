@@ -25,9 +25,19 @@ public class RefreshTokenService {
     }
 
     public RefreshToken createRefreshToken(Long userId) {
+
+        // delete old refresh token if user exist
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        // delete token
+        refreshTokenRepository.deleteByUser(user);
+
+        refreshTokenRepository.flush();
+
+        // create new refresh token
         RefreshToken refreshToken = new RefreshToken();
 
-        refreshToken.setUser(userRepository.findById(userId).get());
+        refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
 
