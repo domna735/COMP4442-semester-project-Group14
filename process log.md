@@ -1,9 +1,11 @@
 # Process Log
+
 This document captures the daily activities, decisions, and reflections for building and deploying our Spring Boot cloud computing service.
 
 Follow the template below to document your activities, decisions, and reflections for each day of the week.
 
 ## YYYY-MM-DD | Short Title
+
 Intent:
 Action:
 Result:
@@ -13,6 +15,7 @@ Next:
 ---
 
 ## 2026-03-20 | Repository and Service Initialization
+
 Intent:
 Set up the semester project repository and establish a working Spring Boot baseline for the cloud computing service.
 
@@ -31,6 +34,7 @@ Install Java 17 and Maven on the local environment to run and test the service, 
 ---
 
 ## 2026-03-22 | Process Documentation Update
+
 Intent:
 Improve project documentation quality by updating the process log with concrete development activities and outcomes.
 
@@ -49,6 +53,7 @@ Continue adding one log entry per meaningful development session (coding, testin
 ---
 
 ## 2026-03-24 | Base Setting Completion
+
 Intent:
 Complete the project baseline configuration before implementing task management business functions.
 
@@ -67,6 +72,7 @@ Start implementing Task Management domain functions (entity, repository, service
 ---
 
 ## 2026-03-25 | Task Entity Implementation
+
 Intent:
 Begin Phase 2 core API development by completing the first Task Management domain artifact.
 
@@ -85,6 +91,7 @@ Implement the JPA repository as the next Phase 2 step, then continue service and
 ---
 
 ## 2026-03-25 | Task Repository and Service Layer Implementation
+
 Intent:
 Complete the persistence and business logic layers for Task Management CRUD operations.
 
@@ -103,17 +110,19 @@ Implement the REST controller for Task CRUD endpoints with proper HTTP methods, 
 ---
 
 ## 2026-03-25 | Task REST Controller and API Completion
+
 Intent:
 Complete Phase 2 by implementing the full REST API layer with request/response DTOs, validation, and OpenAPI documentation.
 
 Action:
 Created CreateTaskRequest DTO with validation annotations (NotBlank, Size) for title and description fields. Created TaskResponse DTO to serialize Task entities back to clients. Implemented TaskController with five REST endpoints:
+
 - POST /api/v1/tasks (create new task)
 - GET /api/v1/tasks (retrieve all tasks)
 - GET /api/v1/tasks/{id} (retrieve task by ID)
 - PUT /api/v1/tasks/{id} (update task)
 - DELETE /api/v1/tasks/{id} (delete task)
-Added comprehensive Swagger/OpenAPI annotations (@Tag, @Operation, @ApiResponse, @ApiResponses) for automatic API documentation. All endpoints return proper HTTP status codes (201 Created, 200 OK, 204 No Content, 404 Not Found).
+  Added comprehensive Swagger/OpenAPI annotations (@Tag, @Operation, @ApiResponse, @ApiResponses) for automatic API documentation. All endpoints return proper HTTP status codes (201 Created, 200 OK, 204 No Content, 404 Not Found).
 
 Result:
 Phase 2 Core API Development is now complete. The entire Task Management CRUD API is functional with validation, error handling, persistence, and documentation. Tests pass. All five Task CRUD endpoints are ready for integration testing and deployment. API documentation is automatically generated and accessible via Swagger UI.
@@ -127,6 +136,7 @@ Phase 2 complete. Ready to proceed with Phase 3 (Database Integration) and Phase
 ---
 
 ## 2026-03-28 | Task 2 Kickoff - Database Integration Baseline
+
 Intent:
 Start Task 2 by preparing environment-specific database configuration for local development and future AWS RDS deployment.
 
@@ -145,6 +155,7 @@ Provision AWS RDS instance and security group rules, then set EC2 environment va
 ---
 
 ## 2026-03-28 | Task 2 Deployment Runbook Preparation
+
 Intent:
 Provide a teammate-ready, step-by-step deployment guide so Task 2 execution can be performed consistently by any member.
 
@@ -163,6 +174,7 @@ Execute the runbook on AWS by creating the actual RDS and EC2 resources, then co
 ---
 
 ## 2026-03-28 | Task 2 Deployment Artifact Packaging
+
 Intent:
 Turn Task 2 deployment instructions into reusable repository artifacts so all team members can run the same production flow.
 
@@ -181,6 +193,7 @@ Run the deployment artifacts on EC2 with real RDS credentials, validate service 
 ---
 
 ## 2026-03-28 | Task 2 Verification and Troubleshooting Completion
+
 Intent:
 Finalize the in-project Task 2 deliverables by adding a quick deployment verifier and common RDS failure guidance for teammates.
 
@@ -199,6 +212,7 @@ Begin Task 3 by implementing the initial UI prototype for Task Management flows 
 ---
 
 ## 2026-03-28 | Task 3 Kickoff - UI Prototype Started
+
 Intent:
 Start Task 3 by delivering a visible frontend prototype that exercises Task CRUD APIs end-to-end.
 
@@ -217,6 +231,7 @@ Refine visual design and UX details, then capture UI evidence screenshots and in
 ---
 
 ## 2026-03-28 | Task 3 UI Refinement and Function Test Start
+
 Intent:
 Improve UI clarity/usability and begin UI-based functional testing with repeatable automated checks.
 
@@ -235,6 +250,7 @@ Continue Task 3 by polishing visual details, capturing UI evidence screenshots, 
 ---
 
 ## 2026-03-28 | Task 3 UI Evidence Checklist Added
+
 Intent:
 Create a compact, repeatable checklist so UI testing evidence can be collected consistently for the final report and demo.
 
@@ -253,6 +269,7 @@ Execute the checklist on local and deployed environments, then attach screenshot
 ---
 
 ## 2026-03-28 | Task 3 Auth Backend and Multi-Page UI Flow
+
 Intent:
 Implement SQL-backed user authentication and split the UI into clear pages (home, login, register, task, edit) while protecting task operations by user session.
 
@@ -271,6 +288,7 @@ Continue Task 3 by polishing UI details, capturing screenshots for each page/sta
 ---
 
 ## 2026-03-28 | Task 3 Extension - Section Commits, Evidence Checklist, Playbooks
+
 Intent:
 Complete Task 3 by committing all auth/UI changes in logical sections, creating an audit/evidence checklist for Task 4, and producing operational playbooks for deployment and live demo.
 
@@ -289,11 +307,13 @@ Task 4: Execute evidence checklist to collect auth/UI screenshots, run demo play
 ---
 
 ## 2026-03-29 | Task 4 Start - Comprehensive Test Execution Guide & Documentation Updates
+
 Intent:
 Begin Task 4 by creating a complete manual test execution guide that teams can follow to validate all auth, task management, user isolation, and API functionality. Update all related documentation to reference the new testing procedures.
 
 Action:
 Created comprehensive test_execution_guide.md (2,500+ lines, 7 testing phases, 34 test cases) covering:
+
 - Phase 1: User registration & account creation with duplicate detection
 - Phase 2: User authentication & login with valid/invalid credentials
 - Phase 3: Task CRUD operations (create, view, edit, delete) for User A (Alice)
@@ -316,6 +336,7 @@ All documentation synchronized: plan.md, playbook.md, realtime_demo_playbook.md,
 
 Decision / Interpretation:
 Creating a dedicated comprehensive test execution guide (separate from the demo script and operational playbook) provides:
+
 1. Clear step-by-step instructions for manual testing with expected results after each action
 2. Explicit test data (alice/bob usernames, email addresses, passwords) for consistent reproduction
 3. Critical path validation with marked CRITICAL tests for security features (user isolation)
@@ -340,13 +361,14 @@ Action:
 Created three new documentation files to support final deliverables:
 
 1. **report.md** (5,000+ lines, detailed template)
+
    - Complete Word report content structure with all recommended sections
    - Full text for each section (Executive Summary, Technical Implementation, Security & User Isolation, UI/UX, Testing & Validation, Deployment Architecture, Team Contributions, GitHub Trace, Conclusion)
    - Strict formatting instructions: Times New Roman 12pt, A4, 1-inch margins, single-column, ≥single line spacing
    - Content includes architecture diagrams (text-based for markdown), code examples, test evidence references, and team role breakdown
    - Final checklist to verify Word document meets all format requirements before submission
-
 2. **ppt.md** (6,000+ lines, slide content guide)
+
    - 10 slides + cover page structure with exact content for each slide
    - Slide-by-slide breakdown showing:
      * Slide 1: Project Overview (1 minute)
@@ -362,8 +384,8 @@ Created three new documentation files to support final deliverables:
    - Instructions for visual elements, text minimization, font sizing
    - Speaker notes integrated with each slide
    - Timing breakdown ensuring 12-minute total presentation + demo + 3-minute Q&A
-
 3. **ppt_script.md** (5,000+ lines, comprehensive speaker notes)
+
    - Detailed speaking notes for all 10 slides + cover
    - Complete and detailed 12-minute demo script with exact actions and dialogue:
      * Segment 1 (0-3 min): Authentication registration & login
@@ -387,6 +409,7 @@ Created three new documentation files to support final deliverables:
    - Presentation tips: timing, eye contact, emphasis, storytelling, confidence, Q&A preparation
 
 Updated plan for project.md:
+
 - Reorganized Documentation Reference section to categorize: Task Delivery, Operational & Demo, Presentation & Report, Project Documentation
 - Added new references to report.md, ppt.md, ppt_script.md with descriptions
 - Updated Execution Order to itemize Task 4 sub-tasks:
@@ -405,10 +428,9 @@ Result:
 Task 4 Phase 2 complete. The team now has three comprehensive guides for creating final presentation and report deliverables:
 
 - **report.md** serves as a complete template for the Word report. Team members can copy content sections, customize with project-specific details, and verify formatting compliance before submission. The template emphasizes strict format requirements (Times New Roman 12pt, A4, 1-inch margins) which, if violated, results in zero credit.
-
 - **ppt.md** provides exact slide-by-slide content structure. The team can use this as a blueprint when creating the PowerPoint presentation, ensuring all critical information is included and visually organized. Timing guidance ensures content fits within 12-minute presentation.
-
 - **ppt_script.md** offers three benefits:
+
   1. Full speaker notes for every slide, enabling any team member to present confidently
   2. Complete demo script with exact actions and dialogue − allows presenters to practice repeatedly before live demo
   3. Q&A preparation with anticipated questions and strong answers, reducing presenter anxiety
@@ -417,12 +439,14 @@ All three documents are interconnected and cross-referenced with other project g
 
 Decision / Interpretation:
 Creating detailed templates and scripts before actual PowerPoint/Word document creation significantly reduces:
+
 - Formatting errors or non-compliance (strict format = critical grade criterion)
 - Content gaps or missing information
 - Demo execution errors or omitted test scenarios
 - Presenter confusion or inconsistent messaging
 
 The template-first approach allows the team to:
+
 1. Review and approve content structure before time-consuming tool-based creation
 2. Ensure all three presentation artifacts (PDF, script, spoken) tell the same consistent story about the project
 3. Enable any team member to present without requiring deep knowledge of all technical details
@@ -431,6 +455,7 @@ The template-first approach allows the team to:
 The Q&A preparation and troubleshooting guides ensure presenters avoid awkward silences or confusion during live demo if something breaks.
 
 Next:
+
 1. Execute test_execution_guide.md manually (34 test cases across 7 phases) to collect evidence screenshots
 2. Create actual PowerPoint presentation using ppt.md as content guide
 3. Create actual Word report using report.md as template
@@ -441,15 +466,17 @@ Next:
 ---
 
 ## 2026-03-29 | Full Project Health Check and Final Plan Sync
+
 Intent:
 Run a full technical verification pass before final submission preparation and update planning documents based on objective results.
 
 Action:
 Checked repository baseline and latest commit state on `main`. Verified environment tools: Java 17 and Maven available. Executed `mvn -q clean test` for full compile and test validation. Confirmed surefire report results for both test classes:
+
 - `CloudComputeServiceApplicationTests`: 1 run, 0 failures, 0 errors
 - `TaskUiAndApiIntegrationTests`: 3 run, 0 failures, 0 errors
-Validated automation script syntax with `bash -n scripts/one-click-dev.sh` and `bash -n scripts/smoke-test.sh`.
-Attempted prerequisite verification for smoke runtime and found `curl` is not installed in the current local environment, so one-command runtime smoke execution is currently blocked on this machine.
+  Validated automation script syntax with `bash -n scripts/one-click-dev.sh` and `bash -n scripts/smoke-test.sh`.
+  Attempted prerequisite verification for smoke runtime and found `curl` is not installed in the current local environment, so one-command runtime smoke execution is currently blocked on this machine.
 
 Result:
 Core code health is passing: build/test validation is successful and no regression was detected. Script quality check passed at syntax level. The only remaining local technical blocker for one-command runtime smoke verification is missing `curl`.
@@ -458,6 +485,7 @@ Decision / Interpretation:
 The project is technically stable for submission from a code/test perspective. Final readiness work should now focus on evidence completion (manual screenshots), final `.pptx` and `.docx` artifact generation, and a last smoke run in an environment with `curl` installed.
 
 Next:
+
 1. Install `curl` (`sudo apt update && sudo apt install -y curl`) on demo machine and rerun `./scripts/one-click-dev.sh --stop-after-test`
 2. Complete evidence checklist items in `plan for project.md` during manual test execution
 3. Generate final PowerPoint and Word files from `ppt.md` and `report.md`
@@ -466,6 +494,7 @@ Next:
 ---
 
 ## 2026-03-29 | Final Smoke Verification Completed and Script Alignment
+
 Intent:
 Close the remaining runtime verification gap by installing missing tooling, executing one-command smoke validation, and aligning script/document expectations with current API behavior.
 
@@ -474,6 +503,7 @@ Installed `curl` on local Ubuntu environment and verified availability. Executed
 
 Result:
 The one-command verification path is now fully operational on this machine. Smoke checks pass end-to-end with expected status codes:
+
 - Ping: 200
 - Register: 201
 - Login: 200
@@ -481,12 +511,13 @@ The one-command verification path is now fully operational on this machine. Smok
 - Create task: 201
 - List tasks: 200
 - Logout: 200
-Documentation and scripts are now consistent with actual backend API semantics.
+  Documentation and scripts are now consistent with actual backend API semantics.
 
 Decision / Interpretation:
 Aligning expected statuses with real API behavior improves reliability of automated checks and avoids false-negative failures during demo preparation. Messaging improvements in one-click script reduce operator confusion when port 8080 is already occupied by an existing app process.
 
 Next:
+
 1. Complete manual screenshot evidence checklist in `plan for project.md`
 2. Generate final `.pptx` and `.docx` artifacts from `ppt.md` and `report.md`
 3. Run final team go/no-go checklist and submit package
@@ -494,6 +525,7 @@ Next:
 ---
 
 ## 2026-03-29 | Full Essay-Style Technical Report Draft and Final Documentation Sync
+
 Intent:
 Produce a complete chapter-based essay report for the project (separate from submission-limited template format), then finalize process trace updates before final repository sync.
 
@@ -507,7 +539,57 @@ Decision / Interpretation:
 Maintaining two documentation tracks is beneficial: one constrained template for grading format and one unconstrained full technical narrative for depth, auditability, and future reuse.
 
 Next:
+
 1. Final review and refinement of `full_technical_report.md` language/style (if needed)
 2. Convert selected sections into final `.docx` submission format where required
 3. Complete final evidence attachments and submission packaging
 
+---
+
+
+### 2026-04-05 | Short-term Access Token and Long-term Refresh Token
+
+**Intent:**
+Upgrade the authentication system from simple JWT to a dual-token (Access + Refresh) strategy to enhance user experience and system security.
+
+**Action:** * Modified the existing authorization method (previously session-based) to use stateless JWT, reducing server-side resource consumption for session maintenance.
+
+* Updated `SecurityConfig.java` to permit access to public pages and JavaScript content while protecting API endpoints.
+* Implemented `AuthTokenFilter.java` and `JwtUtils.java` as middleware to intercept and verify the user's access token in the request header.
+* Updated the login logic and DTOs to return both an `accessToken` (short-lived) and a `refreshToken` (long-lived).
+* Added a key generation script to obtain ECDSA key pairs; keys are manually moved in `.pem` format to the project's resource folder.
+* Implemented the `ensureAuth` function in the frontend JavaScript to verify authorization before performing requests on the Task and Edit pages.
+* Integrated automated token renewal logic using the refresh token when the access token expires.
+
+**Result:**
+User authorization is now handled via JWT instead of sessions. Upon successful login, tokens are stored client-side. Subsequent requests present the access token, which the server verifies. The backend successfully handles expired access tokens via a dedicated `/api/v1/auth/refresh` endpoint, allowing the user to continue accessing the service seamlessly without re-logging.
+
+**Decision / Interpretation:**
+Using JWT with ECDSA over traditional sessions provides better security and performance for stateless services. This architecture is ideal for cloud computing as it allows the service to scale horizontally without session synchronization issues.
+
+**Next:**
+Implement SQLite as the default database. H2 in-memory storage is insufficient for long-term development or persistence after server restarts. SQLite will serve as a reliable, persistent default for both development and cloud deployment when a full RDS instance is not available.
+
+---
+
+
+### 2026-04-14 | implement sqlite as default database
+
+**Intent:**
+Transition the project from volatile H2 memory to persistent SQLite storage and fix database collision issues with refresh token feature.
+
+**Action:**
+
+* Updated `application.properties` to utilize SQLite with fallback logic for production environment variables.
+* Diagnosed `SQLITE_CONSTRAINT_UNIQUE` errors occurring during the refresh token generation process, when system exist previous refresh token.
+* Modified `RefreshTokenService.java` to include a pre-insertion deletion check: old tokens for a specific user are now deleted before a new one is saved.
+* Applied `@Transactional` and `@Modifying` annotations to ensure database consistency with new database scheme.
+
+**Result:**
+The system now correctly persists user and task data across restarts. The "UNIQUE constraint failed" error is resolved, and the user can login successfully when exist previous refresh token relate the user.
+
+**Decision / Interpretation:**
+SQLite’s persistence provides a more practical development experience than H2. Previously, H2 would drop the database on restart, which masked issues like token collisions. Using SQLite can address real-world data lifecycle management. Furthermore, SQLite allows the application to remain functional in cloud deployments even when a full AWS RDS instance is not available or provided.
+
+**Next:**
+Ensure the system remains database-agnostic, allowing SQLite as the default while maintaining compatibility with PostgreSQL and MySQL. Proceed with cloud environment testing via EC2 deployment, focusing on file-based key loading and directory permissions.
