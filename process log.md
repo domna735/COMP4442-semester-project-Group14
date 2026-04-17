@@ -727,3 +727,50 @@ Next:
 1. Fill `deploy/ec2/.env.prod` with real RDS and JWT key values on EC2.
 2. Run `./deploy/ec2/setup-db.sh deploy/ec2/.env.prod` on EC2 before starting service.
 3. Start service with `./deploy/ec2/run-prod.sh`, then run `./deploy/ec2/verify-deploy.sh <ec2-base-url>` and archive outputs.
+
+---
+
+## 2026-04-17 | Assignment Requirement Compliance Audit and Documentation Refresh
+
+Intent:
+Update core project-facing documents and perform a metric-by-metric compliance check against COMP4442 final evaluation requirements.
+
+Action:
+Updated `full_technical_report.md` to align with the current implementation state (JWT access/refresh auth, SQLite local default, protected file APIs, and EC2 verification workflow). Rewrote `README.md` to provide clean and consistent setup/deployment guidance, API coverage, and an assignment compliance checklist with explicit pending actions. Audited repository traceability using git history and contributor summaries to evaluate development-trace completeness. Cross-checked current artifacts against rubric dimensions: technological merit, GitHub trace, presentation/demo clarity, and document quality constraints.
+
+Result:
+The project now has synchronized high-level documentation reflecting actual runtime behavior and deployment flow. Requirement audit indicates:
+
+- Technological merit: strong alignment with course technologies and practical cloud deployment workflow.
+- GitHub development trace: substantial and multi-phase (commit history and contributors confirmed).
+- Presentation/demo clarity: mostly ready; final timed rehearsal and role-division verification still required.
+- Document quality: templates and content are prepared; final `.pptx`/`.docx` export must be checked against strict formatting/page limits before submission.
+
+Decision / Interpretation:
+Completing a requirements audit before final packaging reduces grading risk and helps identify the remaining non-code tasks that most often cause point deductions (format compliance, timing control, and repository sharing logistics).
+
+Next:
+1. Share repository access with `wchshapp_business@icloud.com`.
+2. Run final 12-minute rehearsal and verify member job-division explanation in slides/script.
+3. Export final PowerPoint and Word deliverables and validate all format constraints before Learn@PolyU zip submission.
+
+---
+
+## 2026-04-17 | Systemd Template Fix + Slide/Report Consistency Pass + Final Checklist
+
+Intent:
+Close remaining documentation and deployment-template risks before final submission by fixing the systemd template typo, aligning slide/report wording with current architecture, and preparing a practical go/no-go checklist.
+
+Action:
+Updated `deploy/systemd/cloud-compute.service` to remove malformed trailing environment lines (including the `nvironment=` typo) so the template consistently relies on `EnvironmentFile`. Performed a consistency pass on `ppt.md` and `report.md`, replacing outdated session/H2/old-test-count wording with current implementation details: JWT access+refresh auth, SQLite default local runtime, protected file APIs, and current automated test status. Created `final_submission_readiness_checklist.md` with metric-aligned checkboxes for technical merit, GitHub trace, presentation clarity, format compliance, deployment verification, and final zip submission readiness.
+
+Result:
+Operational template and core presentation/report templates are now aligned with current project behavior. Team now has a concrete final checklist to reduce avoidable grading deductions from formatting, mismatch, or missed evidence items.
+
+Decision / Interpretation:
+Final-stage quality issues are most often caused by document mismatch and submission process gaps rather than code defects. A checklist-driven review significantly improves submission reliability.
+
+Next:
+1. Perform one full timed rehearsal using `ppt_script.md` and mark readiness checklist items.
+2. Export final `.pptx` and `.docx`, then verify strict page/format limits.
+3. Run live EC2 deploy verification and archive output for evidence.

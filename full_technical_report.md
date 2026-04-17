@@ -1,7 +1,7 @@
 # Cloud Compute Service
-## Comprehensive Project Report (Essay Format)
+## Comprehensive Project Report (Updated)
 
-Date: 2026-03-29  
+Date: 2026-04-17  
 Project: COMP4442 Semester Project Group 14  
 Repository: domna735/COMP4442-semester-project-Group14
 
@@ -18,7 +18,7 @@ Chapter 1 - Introduction
 Chapter 2 - Project Context and Engineering Foundations  
 2.1 Cloud-Native Service Context  
 2.2 RESTful Service Design Foundations  
-2.3 Security Foundations for Session-Based Systems  
+2.3 Security Foundations for JWT-Based Systems  
 2.4 Data Consistency and Multi-User Isolation Principles  
 2.5 Verification and Reproducibility Principles  
 2.6 Chapter Summary  
@@ -37,7 +37,7 @@ Chapter 4 - Implementation
 4.2 Configuration Profiles and Environment Separation  
 4.3 Authentication Implementation  
 4.4 Task Management Implementation  
-4.5 Compute API Implementation  
+4.5 File Upload and Download Implementation  
 4.6 Frontend Page Flow and Interaction Logic  
 4.7 Automation Scripts and One-Command Workflow  
 4.8 Deployment Assets and Runtime Templates  
@@ -47,7 +47,7 @@ Chapter 5 - Verification, Testing, and Results
 5.1 Test Strategy  
 5.2 Automated Integration Testing Results  
 5.3 Scripted Smoke Verification Results  
-5.4 Manual End-to-End Verification Plan  
+5.4 Deployment Verification Results  
 5.5 Security Behavior Validation  
 5.6 Operational Verification Outcomes  
 5.7 Chapter Summary  
@@ -70,30 +70,29 @@ References and Project Artifacts
 
 ## Abstract
 
-This report presents the design, implementation, verification, and operationalization of Cloud Compute Service, a Spring Boot microservice developed for COMP4442. The system combines three major capabilities in one cohesive platform: session-based authentication, user-scoped task management, and a utility compute API. The project goal is not only to implement APIs that function correctly but also to demonstrate software engineering quality through architecture clarity, security controls, reproducible testing, and deployment readiness.
+This report presents the updated design, implementation, verification, and operationalization of Cloud Compute Service, a Spring Boot microservice developed for COMP4442. The current system integrates four core capabilities in one platform: JWT-based authentication (access token plus refresh token), user-scoped task management, utility compute APIs, and protected file upload/download APIs.
 
-The implemented system follows a layered architecture (Controller, Service, Repository, Entity) and applies security and validation at multiple levels. Authentication relies on Spring Security with server-managed sessions and BCrypt password hashing. Task management is intentionally designed as a multi-user isolation scenario, where every task operation is constrained by the authenticated user identity. This ensures users cannot read, modify, or delete resources owned by other users.
+The implementation follows a layered architecture (Controller, Service, Repository, Entity) with security and validation controls applied across multiple layers. Authentication now uses signed JWT tokens, with ECDSA key-based signing and verification. Authorization is enforced for task and file routes, while selected public routes remain accessible for registration, login, and health/documentation checks.
 
-From an engineering-process perspective, the project includes substantial technical documentation and repeatable operational tooling. A one-command local verification path was created using shell scripts to bootstrap the service and run smoke checks. Deployment templates and scripts were also prepared for cloud hosting on EC2 with RDS-backed persistence. Automated integration tests and smoke scripts were executed successfully, and verification outputs were synchronized with runbooks and planning documents.
+From an engineering-process perspective, the project includes repeatable local and deployment verification workflows. Local one-command scripts start the service and execute full smoke checks, including refresh-token flow and file operations. Deployment scripts support EC2 startup, database prechecks, and end-to-end deployment verification. Automated tests and script outputs demonstrate stable behavior after the latest architecture updates.
 
-The project demonstrates a complete, practical backend service lifecycle: architecture design, secure coding, data modeling, verification, documentation, and deployability. The implementation is suitable for course-scale production-style demonstration and provides a solid foundation for future hardening and feature expansion.
+The project demonstrates a practical backend lifecycle suitable for course-scale production-style demonstration: architecture evolution, security hardening, data ownership isolation, reproducible verification, and deployability.
 
 ## Executive Summary
 
-Cloud Compute Service was built to solve a practical course-aligned problem: how to design a secure cloud-ready service that supports multi-user task workflows while preserving clear software architecture and reproducible engineering process. The final system includes:
+Cloud Compute Service solves a practical course-aligned problem: building a secure, cloud-ready multi-user backend with clear engineering quality. The current system provides:
 
-1. Authentication APIs for register, login, logout, and current-user retrieval.
+1. Auth APIs for register, login, token refresh, logout, and current-user retrieval.
 2. Task APIs for create, list, get by ID, update, and delete.
-3. Compute APIs for service health ping and arithmetic calculation.
-4. Static frontend pages for registration, login, task management, and task editing.
+3. File APIs for authenticated upload, listing, and download.
+4. Compute APIs for health ping and arithmetic calculation.
+5. Static frontend pages for home, register, login, task list, and task edit flows.
 
-The technical core of the system is a layered Spring Boot architecture with JPA-based persistence. The most important security property implemented is user ownership isolation. In controller logic, authenticated identity is injected from Spring Security context. In service logic, every task operation is parameterized by user identity. In repository queries, ownership predicates are enforced directly through methods such as findByUserIdOrderByUpdatedAtDesc and findByIdAndUserId. This design prevents cross-user data leakage by construction.
+The most important security property is user ownership isolation. Task access is scoped by authenticated user identity through service and repository boundaries. File APIs are protected and validated, including upload filename checks, storage boundary controls, and authentication requirements.
 
-The team emphasized verification and reproducibility. Automated tests validate endpoint behavior, page protection, authentication flow, CRUD operations, and expected error semantics. Shell-based smoke tests provide rapid endpoint health checks and regression detection for day-to-day development and demo rehearsal. During verification, an expectation mismatch was found for register endpoint status code (expected 200 versus actual 201). This was corrected across smoke scripts and documentation, resulting in consistent and reliable checks.
+Verification combines JUnit integration tests, local smoke scripts, and deployment verification scripts. Current validation confirms protected-route behavior, auth flow correctness, task CRUD behavior, file API behavior, and unauthenticated rejection semantics.
 
-Operational readiness was addressed through environment separation and deployment templates. Development uses H2 for speed and simplicity; production profile externalizes datasource settings through environment variables for EC2/RDS deployment. Systemd templates and verifier scripts were included to standardize service startup and health checks on cloud hosts.
-
-Overall, this project achieved its technical goals and demonstrates strong engineering discipline for a semester-scale system: secure behavior, clean design, reproducible tests, and deployment-oriented documentation.
+Operational readiness is supported by profile separation and environment templates. Local development defaults to SQLite for quick setup, while production profile supports MySQL/PostgreSQL through environment variables. EC2 scripts validate DB connectivity and run deployment checks consistently.
 
 ---
 
@@ -101,46 +100,46 @@ Overall, this project achieved its technical goals and demonstrates strong engin
 
 ### 1.1 Background and Problem Motivation
 
-Modern cloud services are often evaluated not only by whether endpoints return correct responses, but by whether they are secure, maintainable, testable, and deployable under realistic constraints. In educational projects, teams commonly over-focus on feature count while under-investing in architecture discipline and verification reproducibility. This project was intentionally framed to avoid that imbalance.
+Modern cloud services are evaluated not only by endpoint correctness, but also by security, maintainability, testability, and deployability. Educational projects often ship features quickly but under-invest in operational rigor and reproducibility. This project was designed to avoid that gap.
 
-The motivating problem is straightforward but meaningful: build a cloud-hostable task management service where multiple users can authenticate and manage their own tasks, while guaranteeing that one user's data never leaks to another user. This creates a natural testbed for security boundaries, ownership-aware query design, and end-to-end workflow validation.
+The motivating problem is to build a cloud-hostable task and file service where multiple users can authenticate and manage their own resources without cross-user data leakage. This naturally requires strong identity handling, authorization boundaries, and repeatable verification.
 
 ### 1.2 Project Objectives and Success Criteria
 
 The project pursued four primary objectives:
 
-1. Implement a functional REST microservice with authentication, task CRUD, and utility compute endpoints.
-2. Enforce strong user-level data isolation across all task operations.
-3. Deliver reproducible verification through automated tests and scripted smoke checks.
-4. Prepare cloud deployment artifacts and operational documentation suitable for demonstration.
+1. Implement a functional REST microservice with auth, task, file, and compute endpoints.
+2. Enforce strict user-level data isolation and protected API access.
+3. Deliver reproducible verification via automated tests and scripts.
+4. Prepare deployment artifacts for EC2 with configurable production databases.
 
-Success criteria include passing automated tests, successful smoke verification, consistent API semantics, complete implementation trace in version control, and clear documentation for setup, testing, and deployment.
+Success criteria include passing integration tests, passing smoke/deploy scripts, validated protected-route behavior, and synchronized documentation that matches implementation.
 
 ### 1.3 Scope, Assumptions, and Constraints
 
 In-scope items:
 
-1. Spring Boot backend with session authentication.
-2. SQL persistence model with user-task relationships.
-3. Multi-page static frontend for interaction and demo.
-4. Local and cloud-oriented runtime configuration.
-5. Verification tooling and runbooks.
+1. Spring Boot backend with JWT authentication and refresh-token lifecycle.
+2. SQL persistence model with user-task ownership.
+3. Authenticated file upload/list/download endpoints.
+4. Multi-page static frontend for demo interaction.
+5. Local and cloud-oriented run scripts and verification guides.
 
 Assumptions:
 
-1. Local development occurs on Java 17 and Maven-compatible environments.
-2. Cloud production uses EC2 and RDS with environment-driven datasource configuration.
-3. Browser clients accept cookie-based session handling.
+1. Development uses Java 17 and Maven.
+2. Local default database is SQLite.
+3. Cloud runtime targets EC2 with optional RDS (MySQL/PostgreSQL).
 
 Constraints:
 
-1. Course timeline and team bandwidth.
-2. Limited infrastructure complexity acceptable for semester scope.
-3. Security hardening optimized for project demonstration level rather than full enterprise baseline.
+1. Semester timeline and team bandwidth.
+2. Course-scale infrastructure complexity.
+3. Production hardening is meaningful but not enterprise-complete.
 
 ### 1.4 Report Structure
 
-This report is organized to mirror the engineering lifecycle from problem framing through implementation and analysis. Chapter 2 explains foundations and design rationale. Chapter 3 defines requirements and architecture decisions. Chapter 4 details implementation. Chapter 5 presents verification and results. Chapter 6 discusses findings and limitations. Chapter 7 concludes with lessons and future roadmap.
+This report mirrors the full engineering lifecycle: context and design decisions, implementation details, verification evidence, and future hardening roadmap.
 
 ---
 
@@ -148,47 +147,51 @@ This report is organized to mirror the engineering lifecycle from problem framin
 
 ### 2.1 Cloud-Native Service Context
 
-Cloud-native services should be stateless where possible, environment-configurable, and observable. Even when full distributed patterns are not required, a service should separate environment concerns from code and support predictable runtime behavior across development and production. This project applies those principles with profile-based configuration and environment variable injection for production data sources.
+Cloud-native service quality depends on environment-configurable runtime behavior and clear deployment automation. This project applies profile-based configuration and environment-driven secrets/DB settings to support local and EC2 execution with minimal code changes.
 
 ### 2.2 RESTful Service Design Foundations
 
-The service follows resource-oriented API design where task resources are manipulated through conventional HTTP semantics:
+The API follows standard HTTP semantics:
 
-1. POST for creation.
-2. GET for retrieval.
-3. PUT for update.
-4. DELETE for removal.
+1. POST for creation and auth operations.
+2. GET for retrieval operations.
+3. PUT for updates.
+4. DELETE for removals.
 
-Status codes are used to encode operation outcomes (for example 201 for creation and 204 for successful delete without response body). This improves client interoperability and test clarity.
+Status-code contracts are explicit (for example, 201 for created resources and 401 for unauthorized protected routes), enabling reliable test automation.
 
-### 2.3 Security Foundations for Session-Based Systems
+### 2.3 Security Foundations for JWT-Based Systems
 
-A core design choice was server-managed session authentication rather than token-based JWT. For this project context, session-based design simplifies frontend integration and allows Spring Security to provide robust defaults. Authentication state is represented server-side in SecurityContext and linked to client requests via JSESSIONID cookie.
+The system uses JWT bearer tokens for API authentication:
 
-Key security principles applied:
+1. Access token for protected API calls.
+2. Refresh token for controlled access token renewal.
+3. ECDSA key pair for token signing and verification.
+4. BCrypt password hashing for credential storage.
 
-1. Passwords are never stored in plaintext.
-2. Password hashes use BCrypt.
-3. Protected endpoints require authenticated context.
-4. Unauthorized API access returns 401.
-5. Unauthorized HTML page access redirects to login.
+Security boundaries are centralized in SecurityConfig. Public routes are explicitly allowlisted, while protected API groups such as tasks and files require valid bearer tokens.
 
 ### 2.4 Data Consistency and Multi-User Isolation Principles
 
-The system enforces ownership consistency through both schema and query design. Tasks reference users through foreign keys, and repository methods always constrain reads by user identity. This avoids insecure patterns where user identifiers are accepted directly from untrusted request parameters.
+User isolation is enforced by design:
+
+1. Tasks are persisted with user ownership.
+2. Service operations resolve identity from authenticated principal.
+3. Repository lookups are constrained by user identity.
+4. Unauthorized cross-user access does not expose target resources.
 
 ### 2.5 Verification and Reproducibility Principles
 
-Software quality claims are valid only when reproducible. This project therefore combines:
+Verification combines complementary layers:
 
-1. Automated integration tests for deterministic backend behavior.
-2. Smoke scripts for rapid end-to-end endpoint checks.
-3. Manual test execution guide for UI and evidence collection.
-4. Process logging to preserve development traceability.
+1. Integration tests for deterministic backend and route behavior.
+2. Smoke scripts for full API flow (auth, refresh, tasks, files).
+3. Deployment verifier scripts for environment-level checks.
+4. Playbooks for manual demo consistency.
 
 ### 2.6 Chapter Summary
 
-Chapter 2 establishes the design principles behind the implementation. The project is positioned as an engineering-quality service effort, not merely a feature list.
+The foundation emphasizes security-by-design, reproducibility, and cloud-ready operability rather than feature count alone.
 
 ---
 
@@ -196,57 +199,63 @@ Chapter 2 establishes the design principles behind the implementation. The proje
 
 ### 3.1 Functional Requirements
 
-The system must support:
+The current system supports:
 
-1. User registration with validation and uniqueness checks.
-2. User login and logout with session state handling.
-3. Retrieval of authenticated user profile.
-4. Task creation and task listing for current user.
-5. Task retrieval, update, and delete by ID for current user.
-6. Compute ping and arithmetic calculation endpoints.
+1. User registration and login.
+2. Access token refresh.
+3. Current-user retrieval and logout.
+4. Task create/list/get/update/delete for authenticated users.
+5. File upload/list/download for authenticated users.
+6. Compute ping and calculation endpoints.
 
 ### 3.2 Non-Functional Requirements
 
-The system should maintain:
+The system targets:
 
-1. Security: authenticated route protection and user data isolation.
-2. Reliability: stable API responses and predictable status codes.
-3. Maintainability: clear layered architecture and modular code.
-4. Operability: easy local startup/testing and cloud runtime templates.
-5. Reproducibility: repeatable tests and documented verification paths.
+1. Security: protected routes and user isolation.
+2. Reliability: stable API contracts and predictable behavior.
+3. Maintainability: layered architecture and clear package separation.
+4. Operability: one-command local validation and script-based deployment checks.
+5. Reproducibility: test/script workflows that produce consistent results.
 
 ### 3.3 High-Level Architecture
 
-Architecture layers:
+Primary layers and responsibilities:
 
-1. Controllers expose REST interfaces and page access behavior.
-2. Services encapsulate business logic and ownership constraints.
-3. Repositories provide database operations through Spring Data JPA.
-4. Entities model data relationships and lifecycle metadata.
-5. Security and exception layers provide cross-cutting controls.
+1. Controllers expose APIs and static route behavior.
+2. Services apply business rules and ownership constraints.
+3. Repositories implement persistence operations.
+4. Entities define relational models.
+5. Security layer handles JWT parsing, validation, and authorization.
+6. Exception layer standardizes error responses.
 
 ### 3.4 Authentication and Authorization Design
 
-Authorization boundaries are defined centrally in SecurityConfig. Public endpoints include register, login, compute APIs, and documentation routes. Task endpoints and authenticated user APIs require valid session context.
+Authentication flow:
 
-The authentication sequence is:
+1. User logs in with username/password.
+2. Server authenticates credentials.
+3. Server returns access token and refresh token.
+4. Client sends bearer access token to protected APIs.
+5. Client uses refresh token to obtain a new access token when needed.
 
-1. Credentials submitted to login endpoint.
-2. AuthenticationManager verifies credentials through UserDetailsService.
-3. SecurityContext is created and stored in session.
-4. Subsequent requests reuse session cookie.
+Authorization flow:
+
+1. JWT filter validates incoming bearer token.
+2. Security context is populated for valid tokens.
+3. Protected endpoints enforce authentication and ownership semantics.
 
 ### 3.5 Data Model and Ownership Model
 
-Data model includes users and tasks. A task belongs to exactly one user. Ownership logic does not rely on client-provided user identifiers. Instead, identity originates from authenticated principal and propagates through service/repository operations.
+Core model includes AppUser, Task, and RefreshToken entities. Ownership enforcement avoids trusting client-supplied user IDs and always derives identity from authenticated context.
 
 ### 3.6 Error Handling and Observability Design
 
-A global exception handler normalizes error responses with code, message, and timestamp fields. Validation errors, authentication failures, not-found cases, and unexpected failures are mapped to consistent HTTP statuses. Actuator endpoints for health/info are exposed to support operational checks.
+Global exception handling maps validation and domain errors to consistent HTTP responses. Actuator and ping endpoints provide lightweight runtime observability for script-based health checks.
 
 ### 3.7 Chapter Summary
 
-Chapter 3 translates the engineering goals into explicit requirements and architecture mechanisms. The next chapter details concrete implementation.
+The architecture translates core requirements into enforceable boundaries for identity, data ownership, and operational reliability.
 
 ---
 
@@ -254,7 +263,7 @@ Chapter 3 translates the engineering goals into explicit requirements and archit
 
 ### 4.1 Backend Technology Stack and Project Structure
 
-Backend implementation uses Spring Boot 3.3.5 with modular packages:
+The backend uses Spring Boot 3.3.5 with package-level modularization:
 
 1. config
 2. controller
@@ -265,77 +274,68 @@ Backend implementation uses Spring Boot 3.3.5 with modular packages:
 7. security
 8. service
 
-This structure supports separation of concerns and easier future extension.
-
 ### 4.2 Configuration Profiles and Environment Separation
 
-Three configuration files are used:
+Configuration files support environment separation:
 
-1. application.properties for shared settings and default profile.
-2. application-dev.properties for H2 local development.
-3. application-prod.properties for externalized production datasource.
+1. application.properties for shared/default settings.
+2. application-dev.properties for local development defaults.
+3. application-prod.properties for production runtime variables.
 
-Production profile reads DB_URL, DB_USERNAME, DB_PASSWORD, and DB_DRIVER_CLASS_NAME from runtime environment variables.
+Runtime variables include DB URL/credentials/driver and JWT key file paths. This supports SQLite local defaults and MySQL/PostgreSQL production deployment.
 
 ### 4.3 Authentication Implementation
 
-Register flow:
+Auth implementation includes:
 
-1. Validate payload constraints.
-2. Check duplicate username and email.
-3. Encode password with BCrypt.
-4. Persist user with default USER role.
-5. Return created response.
-
-Login flow:
-
-1. Authenticate credentials.
-2. Build SecurityContext.
-3. Store context in HTTP session.
-4. Return user payload.
-
-Logout flow clears context/session through Spring logout handler.
+1. Register endpoint with validation and duplicate checks.
+2. Login endpoint issuing access and refresh tokens.
+3. Refresh endpoint returning new access token.
+4. Me endpoint for authenticated user profile.
+5. Logout endpoint to invalidate session/token state as configured.
 
 ### 4.4 Task Management Implementation
 
-Task creation enforces ownership by attaching authenticated user entity before persistence. Task retrieval and mutation use user-scoped repository methods. Update and delete operations first retrieve by id and userId; unauthorized cross-user attempts cannot retrieve target entities.
+Task APIs are implemented with user-scoped ownership:
 
-### 4.5 Compute API Implementation
+1. Create associates task with authenticated user.
+2. List retrieves only current-user tasks.
+3. Get/Update/Delete enforce ownership-bound lookup.
+4. Validation and exception handling provide stable API semantics.
 
-Compute module implements arithmetic on validated input DTOs and supports ADD, SUBTRACT, MULTIPLY, and DIVIDE operators. Domain validation rejects division by zero and unsupported operators through controlled exceptions.
+### 4.5 File Upload and Download Implementation
+
+File APIs support secure authenticated file handling:
+
+1. Upload endpoint stores files with sanitized/randomized names.
+2. List endpoint returns available uploaded file names.
+3. Download endpoint serves selected file if authorized.
+4. Security checks prevent unauthenticated access to file routes.
+5. Storage checks reduce path traversal and unsafe filename risks.
 
 ### 4.6 Frontend Page Flow and Interaction Logic
 
-Frontend uses static pages:
-
-1. index page for navigation.
-2. register/login pages for authentication.
-3. protected task page for CRUD operations.
-4. protected edit page for update workflow.
-
-Protected pages depend on session state and redirect to login when unauthenticated.
+Frontend pages include index, register, login, task, and edit views. Public pages are accessible directly. Protected task/edit views are blocked for unauthenticated access and redirect to login behavior as configured.
 
 ### 4.7 Automation Scripts and One-Command Workflow
 
-Two scripts are central:
+Operational scripts include:
 
-1. smoke-test.sh executes API-level verification sequence.
-2. one-click-dev.sh starts server when needed, waits for readiness, and runs smoke checks.
+1. scripts/one-click-dev.sh for local startup and smoke execution.
+2. scripts/smoke-test.sh for API flow verification.
+3. deploy/ec2/setup-db.sh for DB connectivity prechecks.
+4. deploy/ec2/run-prod.sh for production startup with env validation.
+5. deploy/ec2/verify-deploy.sh for end-to-end deployment verification.
 
-During final verification, register status expectation was aligned to 201 to match API design. Script output behavior was also improved to avoid misleading stop messages when server is pre-existing.
+Current smoke/deploy scripts validate auth, refresh, task CRUD, file upload/list/download, and unauthenticated 401 checks.
 
 ### 4.8 Deployment Assets and Runtime Templates
 
-Deployment support includes:
-
-1. Environment variable template for production profile.
-2. Run script for EC2.
-3. Deployment verification script for endpoint checks.
-4. systemd unit template for service lifecycle management.
+Deployment assets include env template, systemd template, DB setup checker, and deployment verifier. This reduces manual setup errors and improves repeatability on EC2 environments.
 
 ### 4.9 Chapter Summary
 
-Implementation reflects architecture decisions directly and preserves traceability from requirement to concrete code and scripts.
+Implementation aligns with updated requirements and includes both feature delivery and practical operational tooling.
 
 ---
 
@@ -343,69 +343,72 @@ Implementation reflects architecture decisions directly and preserves traceabili
 
 ### 5.1 Test Strategy
 
-The verification strategy combines automated, scripted, and manual approaches:
+The test strategy uses layered verification:
 
-1. Automated integration tests for deterministic backend behavior.
-2. Scripted smoke checks for quick runtime confidence.
-3. Manual phase-based guide for UI and evidence collection.
+1. Integration tests for backend behaviors and route protection.
+2. Smoke scripts for end-to-end API flow.
+3. Deployment verification scripts for environment checks.
+4. Manual playbooks for live demo execution.
 
 ### 5.2 Automated Integration Testing Results
 
-Integration tests validate:
+Recent integration runs confirm:
 
-1. Public and protected page behavior.
-2. Registration and login flow.
-3. Authenticated task CRUD lifecycle.
-4. Validation failure semantics.
-5. Not-found handling after deletion.
+1. Spring context load success.
+2. Public page serving and protected page behavior.
+3. Register/login and authenticated task CRUD flows.
+4. Validation rejection behavior.
 
-Result: automated test suite passed in recent full verification run.
+Latest full test execution completed with zero failures.
 
 ### 5.3 Scripted Smoke Verification Results
 
-Smoke workflow validates:
+Smoke script coverage includes:
 
 1. Ping endpoint.
-2. Registration (201).
-3. Login.
-4. Current user endpoint.
-5. Task create (201).
-6. Task list.
-7. Logout.
+2. Register and login.
+3. Me endpoint.
+4. Task create and list.
+5. Token refresh.
+6. File upload, list, and download.
+7. Logout and unauthenticated access rejection checks.
 
-Result: all smoke checks pass on current local environment after curl installation and status alignment.
+Latest runs passed all checks.
 
-### 5.4 Manual End-to-End Verification Plan
+### 5.4 Deployment Verification Results
 
-Manual test_execution_guide defines phase-based checks for:
+Deployment verifier checks include:
 
-1. Auth success and failure cases.
-2. Protected route behavior.
-3. User-scoped task behavior.
-4. Cross-user isolation validation.
-5. Session persistence/logout behavior.
-6. Documentation endpoint checks.
+1. Health and documentation endpoints.
+2. Unauthenticated protection on task and file APIs.
+3. Auth/register/login flow.
+4. Task and file operation flow under valid token.
+5. Refresh and logout behavior.
+
+Recent verification against local deployment endpoint passed all checks.
 
 ### 5.5 Security Behavior Validation
 
-Observed validated behavior:
+Validated security outcomes:
 
-1. Unauthorized access to protected APIs returns 401.
-2. Unauthenticated HTML access redirects to login.
-3. Cross-user resource access returns not-found behavior.
-4. Passwords are stored as BCrypt hashes.
+1. Protected task/file APIs reject unauthenticated requests with 401.
+2. Protected frontend task/edit routes redirect unauthenticated users.
+3. JWT signing keys load correctly at runtime.
+4. Passwords remain hashed with BCrypt.
+5. Ownership checks prevent cross-user task access.
 
 ### 5.6 Operational Verification Outcomes
 
-Operational readiness checks include:
+Operational readiness evidence includes:
 
-1. Local one-command path.
-2. Deployment verifier for cloud endpoint checks.
-3. Process log updates aligned with technical milestones.
+1. Repeatable local one-command setup and smoke pass.
+2. Deployment precheck scripts for DB and env validation.
+3. Deployment verifier pass for full API workflow.
+4. Updated runbooks and demo playbooks synchronized with current code behavior.
 
 ### 5.7 Chapter Summary
 
-Verification confirms that the implementation is functionally correct, security-consistent, and operationally reproducible.
+Verification confirms functional correctness, security consistency, and deployment reproducibility for the updated project state.
 
 ---
 
@@ -413,34 +416,36 @@ Verification confirms that the implementation is functionally correct, security-
 
 ### 6.1 Key Technical Findings
 
-1. Ownership enforcement works best when identity originates from authenticated context and persists through service and repository boundaries.
-2. Scripted verification significantly reduces debugging time before demos and pushes.
-3. Documentation synchronized with code changes prevents process drift.
+1. JWT access+refresh flow improves API-oriented auth consistency for script and frontend clients.
+2. User ownership constraints in service/repository layers are effective for isolation.
+3. Script-based verification greatly improves confidence before demos and pushes.
+4. Keeping documentation synchronized with architecture changes prevents team confusion.
 
 ### 6.2 Trade-offs and Design Decisions
 
-1. Session auth was selected for simpler browser integration and lower implementation overhead.
-2. Static-page frontend was chosen over SPA frameworks to prioritize backend correctness and timeline control.
-3. H2 for development plus externalized production datasource offered fast iteration and cloud compatibility.
+1. SQLite default local setup reduces onboarding friction.
+2. MySQL/PostgreSQL production support keeps cloud deployment realistic.
+3. Static HTML/JS frontend keeps scope manageable while still demonstrating end-to-end flows.
+4. File API protection increased security coverage but required stronger validation logic.
 
 ### 6.3 Risks, Limitations, and Threats to Validity
 
-1. CSRF is globally disabled and should be revisited for broader production scenarios.
-2. Production profile still uses ddl-auto=update, which is less strict than migration-based governance.
-3. No explicit login throttling or account lockout currently exists.
-4. Current evaluation is primarily course-scale and not load-tested for high concurrency.
+1. Current checks are course-scale; no large-load benchmarking was performed.
+2. Token revocation and advanced session policies can be further improved.
+3. Upload scanning and content-type hardening can be extended.
+4. Production schema migration remains update-driven unless migration tooling is introduced.
 
 ### 6.4 Production Hardening Opportunities
 
-1. Introduce migration tooling such as Flyway or Liquibase.
-2. Add rate limiting and authentication abuse protection.
-3. Add session externalization (for example Redis-backed sessions) for horizontal scaling.
-4. Add centralized logging, tracing, and alerting.
-5. Introduce pagination for task list endpoints.
+1. Introduce Flyway or Liquibase migrations.
+2. Add login throttling, account lockout, and stricter token lifecycle controls.
+3. Expand observability with structured logs and metrics dashboards.
+4. Add file malware scanning and stricter upload policy enforcement.
+5. Add CI/CD pipeline automation for test and deployment verification.
 
 ### 6.5 Chapter Summary
 
-The project reaches a strong course-production baseline, with clear paths toward stricter production readiness.
+The project reaches a strong course-production baseline and provides a clear roadmap for next-level hardening.
 
 ---
 
@@ -448,22 +453,22 @@ The project reaches a strong course-production baseline, with clear paths toward
 
 ### 7.1 Conclusion
 
-Cloud Compute Service delivers a complete secure microservice workflow with clear architecture, validated behavior, and cloud-oriented operational support. The system demonstrates that semester-scale projects can still achieve professional engineering traits: layered design, security boundaries, reproducible checks, and structured documentation.
+Cloud Compute Service now delivers a complete secure microservice workflow with JWT authentication, user-scoped task management, protected file operations, and cloud-oriented deployment tooling. The system demonstrates architecture clarity, practical security controls, and repeatable verification across local and deployment contexts.
 
 ### 7.2 Lessons Learned
 
-1. Security should be encoded in architecture, not patched after feature completion.
-2. Repeatable scripts are critical for confidence and consistency during team collaboration.
-3. Documentation must evolve in lockstep with implementation to remain credible.
-4. Clear status-code contracts between API and tests are essential to avoid false failures.
+1. Security boundaries should be designed early and tested continuously.
+2. Repeatable scripts are essential for team consistency and demo confidence.
+3. Documentation must be updated whenever auth or deployment behavior changes.
+4. Verification should include both backend APIs and frontend access-control behavior.
 
 ### 7.3 Future Work Roadmap
 
-1. Implement migration-based schema evolution.
-2. Add richer task capabilities (search, pagination, metadata filters).
-3. Improve observability with structured metrics and tracing dashboards.
-4. Add more negative-path and resilience test cases.
-5. Package deployment workflows into CI/CD pipelines.
+1. Add migration-based schema governance.
+2. Add pagination/search for task and file listings.
+3. Strengthen token revocation and key-rotation workflows.
+4. Add performance and concurrency test coverage.
+5. Integrate full CI/CD and environment promotion checks.
 
 ---
 
@@ -472,11 +477,11 @@ Cloud Compute Service delivers a complete secure microservice workflow with clea
 Primary project artifacts:
 
 1. README and one-command playbook.
-2. Operational playbook and real-time demo playbook.
+2. Operational playbook and real-time demo playbooks.
 3. Comprehensive test execution guide.
 4. Project plan and process log.
-5. Source code modules under src/main/java and src/test/java.
-6. Deployment assets under deploy.
+5. Source modules under src/main/java and src/test/java.
+6. Deployment assets under deploy/ec2 and deploy/systemd.
 
 Technical framework references:
 
@@ -485,4 +490,3 @@ Technical framework references:
 3. Spring Data JPA documentation.
 4. Springdoc OpenAPI documentation.
 5. Hibernate ORM documentation.
-

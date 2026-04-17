@@ -44,7 +44,7 @@
 
 **Gesture to metrics box:**
 
-> **Third, demonstrated quality:** 6 out of 6 integration tests pass, covering registration, login, task CRUD, and cross-user protection. We have 12+ meaningful git commits showing clear development progression from backend → infrastructure → frontend → testing.
+> **Third, demonstrated quality:** our current automated test suite passes, covering startup, protected-route behavior, auth-backed task CRUD, and validation handling. We also have 12+ meaningful git commits showing clear development progression from backend → infrastructure → frontend → testing.
 
 **Transition:**
 
@@ -64,11 +64,11 @@
 
 **Point to controller layer:**
 
-> "Below that is the controller layer. We have three controllers: an AuthController handling user registration and login, a TaskController managing CRUD operations, and a ComputeController for utility endpoints. Spring Security intercepts all requests and validates the session before they reach the controller.
+> "Below that is the controller layer. We have three controllers: an AuthController handling user registration and login, a TaskController managing CRUD operations, and a ComputeController for utility endpoints. Spring Security intercepts protected requests and validates bearer tokens before they reach the controller.
 
 **Point to service layer:**
 
-> "The service layer contains the business logic. Each service receives the user ID as a parameter from the controller — this is the key to user scoping. The AuthService handles password hashing and session creation. The TaskService performs CRUD operations, but crucially, all operations are scoped to a single user.
+> "The service layer contains the business logic. Each service receives the user ID as a parameter from the controller — this is the key to user scoping. The AuthService handles password hashing and token issuance. The TaskService performs CRUD operations, but crucially, all operations are scoped to a single user.
 
 **Point to repository layer:**
 
@@ -106,17 +106,17 @@
 
 > "When the user logs in, they provide username and password. Spring's AuthenticationManager takes over. It loads the user from the database using our AppUserDetailsService, which implements Spring's UserDetailsService interface. Spring then calls BCrypt's `.matches()` method to verify the provided password against the stored hash.
 
-**Emphasize the session part:**
+**Emphasize token security:**
 
-> "If the password is correct — and only if it's correct — Spring creates a SecurityContext and stores it in an HttpSession. This is the key: the session is created, stored on the server, and a JSESSIONID cookie is sent to the browser. All subsequent requests from this browser automatically include this cookie, allowing Spring to restore the user's context without requiring a password re-entry.
+> "If the password is correct — and only if it's correct — the system issues an access token and a refresh token. The access token is used for protected API calls, and the refresh token is used to obtain new access tokens when needed.
 
 **Point to authenticated request:**
 
-> "So now, when the user requests the task list, the browser sends the JSESSIONID cookie, Spring restores the SecurityContext, and our controller receives the request. Most importantly, we inject the authenticated user details using `@AuthenticationPrincipal`. This gives us the user ID directly from the authentication context — it cannot be spoofed by manipulating query parameters.
+> "So now, when the user requests the task list, the browser sends an Authorization bearer token, the auth filter validates it, and our controller receives the authenticated context. Most importantly, we inject authenticated user details from that context. This gives us the user ID directly from authentication and cannot be spoofed by query parameters.
 
 **Final point:**
 
-> "On logout, the session is invalidated, the JSESSIONID is cleared, and the user is back to being unauthenticated. Future requests to protected endpoints are redirected to the login page.
+> "On logout, the frontend clears auth state and protected endpoints reject missing or invalid tokens. Future requests to protected pages are redirected to login.
 
 **Transition:**
 
@@ -172,12 +172,12 @@ Before you begin the demo, ensure:
 1. ✅ Application running: `mvn spring-boot:run` in terminal visible
 2. ✅ Browser open with 3 tabs ready
 3. ✅ Console/Network tab open to show API calls
-4. ✅ Clear browser cookies/cache (Ctrl+Shift+Delete)
+4. ✅ Clear browser local storage/auth state (Ctrl+Shift+Delete)
 5. ✅ Two separate users ready (alice, bob) with credentials
 
 **Demo Introduction (On camera, speak to audience):**
 
-> "Now I want to show you a live demo of the application running. What you're seeing is localhost:8080 in my browser, connected to a local H2 database. We'll go through the complete workflow: user registration, login, task creation, and the critical user isolation test. All actions you see are real API calls captured in the network tab.
+> "Now I want to show you a live demo of the application running. What you're seeing is localhost:8080 in my browser, connected to a local SQLite database. We'll go through the complete workflow: user registration, login, task creation, and the critical user isolation test. All actions you see are real API calls captured in the network tab.
 
 > "Let me start by navigating to the home page."
 
@@ -234,7 +234,7 @@ Before you begin the demo, ensure:
 
 **[Live Action: Click "Login" button]**
 
-> "We're now on the task management page. Notice at the top it says 'Signed in as alice' with a Logout button. The page made a GET request to `/api/v1/auth/me` to retrieve the current authenticated user. Because alice successfully logged in and has a valid JSESSIONID cookie, this endpoint returned the user information. If the session was invalid, we'd have been redirected back to the login page.
+> "We're now on the task management page. Notice at the top it says 'Signed in as alice' with a Logout button. The page made a GET request to `/api/v1/auth/me` to retrieve the current authenticated user. Because alice successfully logged in and has a valid access token, this endpoint returned the user information. If the token was invalid, we'd have been redirected back to the login page.
 
 ---
 
@@ -259,7 +259,7 @@ Before you begin the demo, ensure:
 
 **[Live Action: Fill task creation form again]**
 - Title: `Study Spring Security`
-- Description: `Master session management and BCrypt hashing`
+- Description: `Master JWT token flow and BCrypt hashing`
 - Status: `IN_PROGRESS`
 
 **[Live Action: Click "Create" button]**
@@ -378,7 +378,7 @@ Actually, let me just navigate directly to the register page.
 
 > "Let me recap what we just demonstrated:
 
-> **User Authentication:** Registration creates a new account with a BCrypt-hashed password. Login creates a session. The session persists across requests using an JSESSIONID cookie.
+> **User Authentication:** Registration creates a new account with a BCrypt-hashed password. Login issues access and refresh tokens. Protected requests use bearer access tokens and refresh endpoint renews access when needed.
 
 > **Task Management:** Full CRUD operations work seamlessly. Create adds tasks to the database. Read shows only the authenticated user's tasks. Update modifies existing tasks. Delete removes them.
 
@@ -400,19 +400,15 @@ Actually, let me just navigate directly to the register page.
 
 **Integration Test Results (Refer to left side):**
 
-> "All 6 integration tests pass. Let me walk through what each test validates:
+> "All current automated tests pass. Let me walk through what each test validates:
 
-> **Test 1 — shouldServePublicPagesAndProtectTaskPage:** This confirms that public pages like home, login, and register return 200 OK, while protected pages like task.html return a 401 Unauthorized response when accessed without a session.
+> **Test 1 — shouldServePublicPagesAndProtectTaskPage:** Confirms public pages return 200 OK and protected pages enforce auth redirect/denial.
 
-> **Test 2 — shouldNotAllowAccessWithoutProperLogin:** Attempts to directly call the API `/api/v1/tasks` without a JSESSIONID cookie. The API correctly rejects the request with a 401 Unauthorized response.
+> **Test 2 — shouldRegisterLoginAndCreateReadUpdateDeleteOwnTask:** Main CRUD workflow with authenticated user context.
 
-> **Test 3 — shouldRegisterLoginAndCreateReadUpdateDeleteOwnTask:** This is our main CRUD workflow test. We register a user, log in, create a task, verify it appears in the list, update it, delete it, and confirm the deletion. All steps succeed with appropriate HTTP status codes.
+> **Test 3 — shouldRejectInvalidTaskCreationForAuthenticatedUser:** Verifies validation rejection behavior for invalid authenticated requests.
 
-> **Test 4 — shouldPreventCrossUserTaskAccess:** This is critical. We register two users, have each create tasks, then verify that alice cannot access bob's tasks and vice versa. The API returns 404 for cross-user requests.
-
-> **Test 5 — shouldValidateRegistrationInput:** Tests that duplicate usernames are rejected, invalid email formats are caught, and passwords meet requirements.
-
-> **Test 6 — shouldManageBCryptPasswordHashing:** Verifies that passwords are stored as BCrypt hashes, not plaintext. Also confirms that login works with the correct password but fails with an incorrect one.
+> **Test 4 — contextLoads:** Verifies baseline application startup and bean wiring.
 
 **Manual Testing Coverage (Refer to right side):**
 
@@ -430,7 +426,7 @@ Actually, let me just navigate directly to the register page.
 
 **Test Metrics (Bottom):**
 
-> "Our test pass rate is 100%. All integration tests pass, all manual tests pass. We have zero known bugs or security vulnerabilities. The build compiles cleanly with no warnings."
+> "Our test pass rate is 100% for the current automated suite, and manual/script verification is documented for demo readiness. The build compiles cleanly with no blockers."
 
 **Transition:**
 
@@ -482,7 +478,7 @@ Actually, let me just navigate directly to the register page.
 
 **Dev vs. Prod Profiles (Bottom right):**
 
-> "During development, we use a different profile. We set `--spring.profiles.active=dev`. The application then uses an H2 in-memory database. No external database needed. This is fast and perfect for local development and CI/CD.
+> "During development, we use a different profile. We set `--spring.profiles.active=dev`. The application then uses SQLite as the default local database. No external database needed, and local data persists across restarts.
 
 > When we're ready to deploy to the cloud, we switch to the prod profile, and the same code base connects to RDS.
 
@@ -508,7 +504,7 @@ Actually, let me just navigate directly to the register page.
 
 **Member C Responsibilities:**
 
-> "Member C owned Task 3: UI and Authentication. Member C had to design and implement the entire authentication system: the AppUser entity, Spring Security configuration, the auth endpoints for register and login, and everything related to password hashing and session management. They also built the frontend — all 5 HTML pages with the navigation flow and session awareness. This was significant work touching both backend and frontend. The evidence is the AppUser entity, SecurityConfig, the UI pages, and the 4 auth-related commits.
+> "Member C owned Task 3: UI and Authentication. Member C had to design and implement the entire authentication system: the AppUser entity, Spring Security configuration, the auth endpoints for register/login/refresh, and everything related to password hashing and JWT token flow. They also built the frontend — all 5 HTML pages with protected-page authentication checks. This was significant work touching both backend and frontend. The evidence is the AppUser entity, SecurityConfig, auth/token integration logic, and related commits.
 
 **All Members Research:**
 
@@ -544,13 +540,13 @@ Actually, let me just navigate directly to the register page.
 
 > "Let's recap what we've accomplished.
 
-> First, we built a Spring Boot microservice following industry best practices. We used layered architecture, dependency injection throughout, Spring Data JPA with automatic SQL generation, and OpenAPI documentation. 6 out of 6 integration tests pass with zero failures.
+> First, we built a Spring Boot microservice following industry best practices. We used layered architecture, dependency injection throughout, Spring Data JPA with automatic SQL generation, and OpenAPI documentation. Current automated tests pass with zero failures.
 
-> Second, we implemented Spring Security authentication properly. We have SQL-backed user persistence with the AppUser entity. Passwords are hashed using BCrypt — never stored plaintext. Sessions are managed through Spring's HttpSession with JSESSIONID cookies. The `@AuthenticationPrincipal` annotation injects the user context automatically into controllers.
+> Second, we implemented Spring Security authentication properly. We have SQL-backed user persistence with the AppUser entity. Passwords are hashed using BCrypt — never stored plaintext. JWT access and refresh tokens protect API calls, and authenticated user context is injected cleanly into controllers.
 
 > Third, and most important, user isolation works. We have 4-layer protection: database constraints, repository query filtering, service layer validation, and controller-level user injection. Cross-user attacks are prevented. We've tested this thoroughly, and it works.
 
-> Fourth, the frontend is multi-page with session awareness. We have 5 HTML pages that handle the complete user flow from registration through task management. The JavaScript on protected pages verifies the session by calling the `/api/v1/auth/me` endpoint and redirects to login if the session is invalid.
+> Fourth, the frontend is multi-page with token-aware behavior. We have 5 HTML pages that handle the complete user flow from registration through task management. The JavaScript on protected pages verifies authentication by calling the `/api/v1/auth/me` endpoint and redirects to login if tokens are missing or invalid.
 
 > Fifth, the application is cloud-ready. It runs on AWS EC2 connected to AWS RDS. Environment-based configuration allows the same JAR to be deployed to development and production without code changes. We've provided runbooks and deployment scripts.
 
@@ -564,7 +560,7 @@ Actually, let me just navigate directly to the register page.
 
 **Project Metrics (Bottom):**
 
-> "In summary: 26 Java source files, 5 HTML pages, 8 DTO classes, around 2000 lines of production code. 6 integration tests all passing, 34 manual test cases documented. 1500+ lines of operational documentation, 800+ lines of demo script, 2500+ lines of test guide. 12 commits showing clear progression. 100% test pass rate.
+> "In summary: 26 Java source files, 5 HTML pages, 8 DTO classes, around 2000 lines of production code. 4 automated tests all passing, with additional manual and script verification documented. 1500+ lines of operational documentation, 800+ lines of demo script, 2500+ lines of test guide. 12+ commits showing clear progression.
 
 **Transition:**
 
@@ -590,9 +586,9 @@ Actually, let me just navigate directly to the register page.
 
 ### POTENTIAL Q&A TALKING POINTS
 
-**Q: "Why did you use session-based authentication instead of JWT?"**
+**Q: "Why did you use JWT access+refresh authentication?"**
 
-A: "Great question. Session-based authentication is simpler for multi-page web applications like ours. With sessions, the browser automatically includes the JSESSIONID cookie, so we don't need to manually handle tokens in the JavaScript code. JWT is better for distributed APIs where each request is independent. For this project, sessions are the better fit.
+A: "Great question. JWT keeps protected API authentication stateless and cloud-friendly, which is useful for EC2-style deployments and future scaling. We use short-lived access tokens for API calls and refresh tokens to renew access without repeated full login.
 
 ---
 
@@ -719,11 +715,11 @@ Use this if you want to practice the demo independently without the presentation
 - Click "Login" (or navigate to /login.html)
 - Fill form: username=alice, password=AlicePass123!
 - Click "Login"
-- Speak: "Notice we're now on the task page. The header shows 'Signed in as alice'. In the background, the app called GET /api/v1/auth/me to verify the session."
+- Speak: "Notice we're now on the task page. The header shows 'Signed in as alice'. In the background, the app called GET /api/v1/auth/me to verify authenticated context."
 
 **[0:45-1:30] Show Terminal & Network**
 - Point to terminal logs: "In the logs, we can see the HTTP requests being logged."
-- Point to Network tab: "The Login request was a POST to /api/v1/auth/register. In the response header, you can see the Set-Cookie: JSESSIONID header. This cookie persists the session across requests."
+- Point to Network tab: "The login response includes access and refresh tokens. Protected API calls include Authorization: Bearer access token."
 
 ---
 
@@ -735,7 +731,7 @@ Use this if you want to practice the demo independently without the presentation
 - Speak: "Task created. It appears in the list with the owner 'alice', the title, status. The network request was POST to /api/v1/tasks with a 201 Created response."
 
 **[1:00-2:00] Create Second Task**
-- Fill task form: Title="Study Spring Security", Description="Master session management", Status="IN_PROGRESS"
+- Fill task form: Title="Study Spring Security", Description="Master JWT token flow", Status="IN_PROGRESS"
 - Click "Create"
 - Speak: "Alice now has two tasks. Let me test the edit functionality."
 
@@ -760,7 +756,7 @@ Use this if you want to practice the demo independently without the presentation
 
 **[0:00-0:30] Logout**
 - Click "Logout"
-- Speak: "We're back at the home page. The session was cleared. Future requests to the task page would redirect to login."
+- Speak: "We're back at the home page. Auth state was cleared. Future requests to the task page redirect to login."
 
 **[0:30-1:00] Bob Registration (if not done earlier)**
 - (Assuming Bob was already registered in Segment 1)
@@ -810,7 +806,7 @@ If something goes wrong during demo:
 - Check for port 8080 conflicts: `lsof -i :8080`
 
 **"Database connection fails"**
-- H2 in-memory doesn't require external setup
+- SQLite default local DB doesn't require external setup
 - If using MySQL, check: `mysql -u [user] -p [password]` can connect
 - Verify JDBC URL in application-dev.properties
 

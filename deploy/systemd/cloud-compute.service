@@ -13,7 +13,3 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-
-
-nvironment=JWT_PRIVATE_KEY_PATH=/home/ubuntu/COMP4442-semester-project-Group14/deploy/keys/ECDSA_384_private.pem
-Environment=JWT_PUBLIC_KEY_PATH=/home/ubuntu/COMP4442-semester-project-Group14/deploy/keys/ECDSA_384_public.pem
