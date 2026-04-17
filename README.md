@@ -154,6 +154,18 @@ chmod +x deploy/ec2/verify-deploy.sh
 ./deploy/ec2/verify-deploy.sh http://<EC2_PUBLIC_IP>:8080
 ```
 
+### 6.6 Archive live EC2 verification evidence (recommended)
+
+```bash
+chmod +x deploy/ec2/live-verify-archive.sh
+./deploy/ec2/live-verify-archive.sh http://<EC2_PUBLIC_IP>:8080
+```
+
+Artifacts are saved under `evidence/ec2/<timestamp>_<host>/` and include:
+- verifier output log (`verify-deploy.log`)
+- metadata (`metadata.txt`)
+- optional screenshots (if a headless Chromium browser is available)
+
 ## 7. systemd Service
 
 Template file:

@@ -884,3 +884,31 @@ This change significantly improves practical upload safety while keeping demo us
 Next:
 1. Enable `FILE_SCAN_ENABLED=true` on EC2 and preload scanner image before final security demo.
 2. Add a script-level assertion that scan failure blocks upload when sandbox scan is enabled.
+
+---
+
+## 2026-04-17 | Live EC2 Verification Evidence Automation
+
+Intent:
+Close the final evidence gap by making live EC2 verification output archival repeatable for final demo and report submission.
+
+Action:
+Added `deploy/ec2/live-verify-archive.sh` to wrap live endpoint verification and archive all evidence artifacts in one run:
+
+1. Runs `deploy/ec2/verify-deploy.sh <ec2-base-url>` and saves full output to a timestamped log.
+2. Saves metadata (timestamp, URL, host, user, commit, exit code) for traceability.
+3. Stores output in `evidence/ec2/<timestamp>_<host>/`.
+4. Attempts optional auto-screenshots (`swagger-ui` and home page) using headless Chromium when available.
+
+Also added `evidence/ec2/README.md` and updated `README.md` with explicit command usage.
+
+Result:
+The team can now produce final live-EC2 evidence in a consistent structure with minimal manual steps, reducing risk of missing proof artifacts in the final report/demo package.
+
+Decision / Interpretation:
+Automating evidence capture improves reproducibility and grading readiness by turning a manual, error-prone step into a deterministic process.
+
+Next:
+1. Run `./deploy/ec2/live-verify-archive.sh http://<EC2_PUBLIC_IP>:8080` against the deployed EC2 service.
+2. If screenshots are not auto-captured, add one manual screenshot into the same run folder.
+3. Reference the generated run folder path in `final_submission_evidence_summary.md`.
