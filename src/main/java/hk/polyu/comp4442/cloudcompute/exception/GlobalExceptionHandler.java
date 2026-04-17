@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -54,7 +55,35 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnknown(Exception ex) {
+        if (isRejectedRequest(ex)) {
+            ApiError error = new ApiError("BAD_REQUEST", "Invalid request.", LocalDateTime.now());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
         ApiError error = new ApiError("INTERNAL_SERVER_ERROR", "Unexpected server error.", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    private boolean isRejectedRequest(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            if (current instanceof RequestRejectedException) {
+                return true;
+            }
+
+            String message = current.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase(Locale.ROOT);
+                if (normalized.contains("request was rejected")
+                        || normalized.contains("invalid character")
+                        || normalized.contains("invalid request target")) {
+                    return true;
+                }
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
     }
 }
