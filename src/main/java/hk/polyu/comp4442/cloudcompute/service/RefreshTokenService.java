@@ -51,4 +51,15 @@ public class RefreshTokenService {
         }
         return token;
     }
+
+    public RefreshToken rotateRefreshToken(RefreshToken token) {
+        verifyExpiration(token);
+        return createRefreshToken(token.getUser().getId());
+    }
+
+    public void revokeByUserId(Long userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        refreshTokenRepository.deleteByUser(user);
+    }
 }

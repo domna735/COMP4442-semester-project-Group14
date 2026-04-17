@@ -247,7 +247,7 @@ Authorization flow:
 
 ### 3.5 Data Model and Ownership Model
 
-Core model includes AppUser, Task, and RefreshToken entities. Ownership enforcement avoids trusting client-supplied user IDs and always derives identity from authenticated context.
+Core model includes AppUser, Task, and RefreshToken entities. Ownership enforcement avoids trusting client-supplied user IDs and always derives identity from authenticated context. File storage ownership is also isolated by authenticated user, with per-user storage paths to prevent cross-user file listing and download.
 
 ### 3.6 Error Handling and Observability Design
 
@@ -292,7 +292,8 @@ Auth implementation includes:
 2. Login endpoint issuing access and refresh tokens.
 3. Refresh endpoint returning new access token.
 4. Me endpoint for authenticated user profile.
-5. Logout endpoint to invalidate session/token state as configured.
+5. Logout endpoint revoking server-side refresh token state for the authenticated user.
+6. Refresh endpoint with refresh-token rotation (new refresh token issued per successful refresh).
 
 ### 4.4 Task Management Implementation
 
@@ -308,10 +309,11 @@ Task APIs are implemented with user-scoped ownership:
 File APIs support secure authenticated file handling:
 
 1. Upload endpoint stores files with sanitized/randomized names.
-2. List endpoint returns available uploaded file names.
-3. Download endpoint serves selected file if authorized.
-4. Security checks prevent unauthenticated access to file routes.
-5. Storage checks reduce path traversal and unsafe filename risks.
+2. File storage is separated by authenticated user directory to enforce ownership isolation.
+3. List endpoint returns only files owned by the authenticated user.
+4. Download endpoint serves files only from the authenticated user's directory.
+5. Security checks prevent unauthenticated access to file routes.
+6. Storage checks reduce path traversal and unsafe filename risks.
 
 ### 4.6 Frontend Page Flow and Interaction Logic
 
@@ -328,6 +330,7 @@ Operational scripts include:
 5. deploy/ec2/verify-deploy.sh for end-to-end deployment verification.
 
 Current smoke/deploy scripts validate auth, refresh, task CRUD, file upload/list/download, and unauthenticated 401 checks.
+Current smoke/deploy scripts also validate refresh-token rotation behavior, including explicit rejection of the old refresh token after rotation.
 
 ### 4.8 Deployment Assets and Runtime Templates
 
@@ -370,8 +373,9 @@ Smoke script coverage includes:
 3. Me endpoint.
 4. Task create and list.
 5. Token refresh.
-6. File upload, list, and download.
-7. Logout and unauthenticated access rejection checks.
+6. Refresh-token rotation assertion (old refresh token fails after refresh).
+7. File upload, list, and download.
+8. Logout and unauthenticated access rejection checks.
 
 Latest runs passed all checks.
 
@@ -383,7 +387,8 @@ Deployment verifier checks include:
 2. Unauthenticated protection on task and file APIs.
 3. Auth/register/login flow.
 4. Task and file operation flow under valid token.
-5. Refresh and logout behavior.
+5. Refresh-token rotation check (old refresh token rejection).
+6. Refresh and logout behavior.
 
 Recent verification against local deployment endpoint passed all checks.
 
@@ -396,6 +401,9 @@ Validated security outcomes:
 3. JWT signing keys load correctly at runtime.
 4. Passwords remain hashed with BCrypt.
 5. Ownership checks prevent cross-user task access.
+6. Per-user file isolation prevents cross-user file list/download access.
+7. Refresh-token rotation reduces refresh-token replay risk.
+8. Logout revokes refresh-token state for the authenticated user.
 
 ### 5.6 Operational Verification Outcomes
 
@@ -433,7 +441,7 @@ Verification confirms functional correctness, security consistency, and deployme
 1. Current checks are course-scale; no large-load benchmarking was performed.
 2. Token revocation and advanced session policies can be further improved.
 3. Upload scanning and content-type hardening can be extended.
-4. Production schema migration remains update-driven unless migration tooling is introduced.
+4. Production schema governance should move to migration tooling (for example Flyway/Liquibase) for stronger change control.
 
 ### 6.4 Production Hardening Opportunities
 

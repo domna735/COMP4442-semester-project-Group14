@@ -79,6 +79,10 @@ public class AuthService {
     public void logout(HttpServletRequest httpRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof CustomUserDetails customUserDetails) {
+                refreshTokenService.revokeByUserId(customUserDetails.getId());
+            }
             new SecurityContextLogoutHandler().logout(httpRequest, null, authentication);
         }
     }

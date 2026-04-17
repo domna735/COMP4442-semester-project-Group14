@@ -63,13 +63,13 @@ public class AuthController {
         String requestRefreshToken = request.getRefreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
-                .map(refreshTokenService::verifyExpiration)
+                .map(refreshTokenService::rotateRefreshToken)
                 .map(token -> {
                     // Generate a new Access Token with JWT Utils
                     String newAccessToken = authService.generateAccessToken(token.getUser().getUsername());
                     // Return the tokens
                     return ResponseEntity.ok(new AuthResponse("Token refreshed successfully.", newAccessToken,
-                            requestRefreshToken, new AuthUserResponse(token.getUser())));
+                            token.getToken(), new AuthUserResponse(token.getUser())));
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }

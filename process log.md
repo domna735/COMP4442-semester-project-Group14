@@ -774,3 +774,44 @@ Next:
 1. Perform one full timed rehearsal using `ppt_script.md` and mark readiness checklist items.
 2. Export final `.pptx` and `.docx`, then verify strict page/format limits.
 3. Run live EC2 deploy verification and archive output for evidence.
+
+---
+
+## 2026-04-17 | Security Hardening Patch (File Isolation + Token Revocation/Rotation + Prod Config Tightening)
+
+Intent:
+Apply prioritized security hardening changes identified in the architecture review and validate that no regression is introduced.
+
+Action:
+Implemented the hardening plan in three ordered steps:
+
+1. File API ownership isolation:
+  - Updated `FileController` so upload/list/download are scoped to authenticated user directories (`uploads/user-<id>/...`) instead of shared global listing.
+  - Kept filename sanitization and storage boundary checks in place while enforcing per-user path boundaries.
+
+2. Refresh-token lifecycle hardening:
+  - Added refresh-token revocation on logout in `AuthService` (revoke token by authenticated user).
+  - Added refresh-token rotation in `RefreshTokenService` and switched `/api/v1/auth/refresh` to return a newly rotated refresh token.
+  - Updated frontend `auth.js` to persist rotated `refreshToken` after successful refresh.
+  - Added integration test coverage for rotation and post-logout refresh rejection.
+
+3. Production/profile safety tightening:
+  - Changed global error-detail defaults to non-verbose (`application.properties`) and kept verbose error details only in dev profile.
+  - Cleaned `application-prod.properties` duplicated JPA settings.
+  - Switched production JPA defaults to env-driven values with safer default `ddl-auto=validate` and `show-sql=false`.
+
+Validation performed:
+- Ran `TaskUiAndApiIntegrationTests` after file isolation changes (pass).
+- Ran `TaskUiAndApiIntegrationTests` again after token hardening + new test (pass).
+- Ran full test suite (`mvn test` path via tool) after config tightening (pass, 7/7).
+
+Result:
+The service now enforces per-user file visibility, reduces refresh-token replay risk through rotation, revokes refresh tokens on logout, and uses safer production-oriented defaults. Test suite remained green after all hardening changes.
+
+Decision / Interpretation:
+These changes significantly reduce practical attack surface while preserving the current architecture and demo workflow. Remaining medium-risk areas (for future work) include token storage strategy (localStorage), advanced file content scanning, and optional stricter refresh-failure response semantics (401/400 instead of generic 5xx for invalid refresh token).
+
+Next:
+1. Update smoke/deploy scripts to add explicit refresh-rotation assertion (old refresh token rejected after refresh).
+2. Consider moving refresh token to `HttpOnly` secure cookie in a future hardening iteration.
+3. Add file MIME/signature checks and optional malware-scanning stage for uploaded files.

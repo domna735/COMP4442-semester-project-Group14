@@ -118,9 +118,33 @@ code="$(http_code POST "$BASE_URL/api/v1/auth/refresh" "$refresh_payload")"
 assert_status "$code" "200" "Refresh access token"
 
 NEW_ACCESS_TOKEN="$(extract_json_field accessToken)"
+NEW_REFRESH_TOKEN="$(extract_json_field refreshToken)"
 if [[ -n "$NEW_ACCESS_TOKEN" ]]; then
   ACCESS_TOKEN="$NEW_ACCESS_TOKEN"
 fi
+if [[ -z "$NEW_REFRESH_TOKEN" ]]; then
+  echo "[FAIL] Refresh response missing rotated refreshToken"
+  cat /tmp/smoke_response.json || true
+  exit 1
+fi
+if [[ "$NEW_REFRESH_TOKEN" == "$REFRESH_TOKEN" ]]; then
+  echo "[FAIL] Refresh token was not rotated"
+  cat /tmp/smoke_response.json || true
+  exit 1
+fi
+
+old_refresh_payload=$(cat <<JSON
+{"refreshToken":"$REFRESH_TOKEN"}
+JSON
+)
+old_refresh_code="$(http_code POST "$BASE_URL/api/v1/auth/refresh" "$old_refresh_payload")"
+if [[ "$old_refresh_code" == "200" ]]; then
+  echo "[FAIL] Old refresh token should fail after rotation"
+  cat /tmp/smoke_response.json || true
+  exit 1
+fi
+echo "[PASS] Old refresh token rejected after rotation -> HTTP $old_refresh_code"
+REFRESH_TOKEN="$NEW_REFRESH_TOKEN"
 
 upload_status="$(curl -sS -o /tmp/smoke_response.json -w "%{http_code}" \
   -X POST "$BASE_URL/api/v1/files/upload" \

@@ -140,7 +140,47 @@ class TaskUiAndApiIntegrationTests {
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
+    @Test
+    void shouldRotateRefreshTokenAndRevokeOnLogout() throws Exception {
+        Map<String, String> tokens = registerAndLoginTokens("refresh_user", "refresh_user@example.com", "password123");
+        String accessToken = tokens.get("accessToken");
+        String refreshToken = tokens.get("refreshToken");
+
+        Map<String, Object> refreshPayload = new HashMap<>();
+        refreshPayload.put("refreshToken", refreshToken);
+
+        String refreshResponse = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshPayload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String rotatedRefreshToken = objectMapper.readTree(refreshResponse).get("refreshToken").asText();
+        org.junit.jupiter.api.Assertions.assertNotEquals(refreshToken, rotatedRefreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        Map<String, Object> staleRefreshPayload = new HashMap<>();
+        staleRefreshPayload.put("refreshToken", rotatedRefreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(staleRefreshPayload)))
+                .andExpect(status().is5xxServerError());
+    }
+
         private String registerAndLogin(String username, String email, String password) throws Exception {
+                Map<String, String> tokens = registerAndLoginTokens(username, email, password);
+                return tokens.get("accessToken");
+        }
+
+        private Map<String, String> registerAndLoginTokens(String username, String email, String password) throws Exception {
         Map<String, Object> registerPayload = new HashMap<>();
         registerPayload.put("username", username);
         registerPayload.put("email", email);
@@ -165,6 +205,9 @@ class TaskUiAndApiIntegrationTests {
                 .getResponse()
                 .getContentAsString();
 
-        return objectMapper.readTree(loginResponse).get("accessToken").asText();
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", objectMapper.readTree(loginResponse).get("accessToken").asText());
+        tokens.put("refreshToken", objectMapper.readTree(loginResponse).get("refreshToken").asText());
+        return tokens;
     }
 }

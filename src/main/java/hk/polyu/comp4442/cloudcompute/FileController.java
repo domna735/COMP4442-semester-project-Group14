@@ -1,11 +1,13 @@
 package hk.polyu.comp4442.cloudcompute;
 
+import hk.polyu.comp4442.cloudcompute.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,7 +44,8 @@ public class FileController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> uploadFile(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                             @RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body("File is empty.");
@@ -54,9 +57,11 @@ public class FileController {
                         .body("File type is not allowed.");
             }
 
+            Path userDirectory = resolveUserDirectory(userDetails);
+
             String storedName = UUID.randomUUID() + "-" + safeOriginalName;
-            Path targetLocation = this.fileStorageLocation.resolve(storedName).normalize();
-            if (!targetLocation.startsWith(this.fileStorageLocation)) {
+            Path targetLocation = userDirectory.resolve(storedName).normalize();
+            if (!targetLocation.startsWith(userDirectory)) {
                 return ResponseEntity.badRequest().body("Invalid file path.");
             }
 
@@ -70,9 +75,9 @@ public class FileController {
     }
 
     @GetMapping("/list")
-    public ResponseEntity<List<String>> listFiles() {
+    public ResponseEntity<List<String>> listFiles(@AuthenticationPrincipal CustomUserDetails userDetails) {
         List<String> filenames = new ArrayList<>();
-        File folder = this.fileStorageLocation.toFile();
+        File folder = resolveUserDirectory(userDetails).toFile();
         File[] listOfFiles = folder.listFiles();
         
         if (listOfFiles != null) {
@@ -86,10 +91,12 @@ public class FileController {
     }
 
     @GetMapping("/download/{filename:.+}")
-    public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> downloadFile(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                 @PathVariable String filename) {
         try {
-            Path filePath = this.fileStorageLocation.resolve(filename).normalize();
-            if (!filePath.startsWith(this.fileStorageLocation)) {
+            Path userDirectory = resolveUserDirectory(userDetails);
+            Path filePath = userDirectory.resolve(filename).normalize();
+            if (!filePath.startsWith(userDirectory)) {
                 return ResponseEntity.badRequest().build();
             }
 
@@ -105,6 +112,21 @@ public class FileController {
         } catch (MalformedURLException ex) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    private Path resolveUserDirectory(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getId() == null) {
+            throw new IllegalArgumentException("Authenticated user is required.");
+        }
+
+        String userFolderName = "user-" + userDetails.getId();
+        Path userDirectory = this.fileStorageLocation.resolve(userFolderName).normalize();
+        try {
+            Files.createDirectories(userDirectory);
+        } catch (IOException ex) {
+            throw new RuntimeException("Could not create user file directory.", ex);
+        }
+        return userDirectory;
     }
 
     private String sanitizeFilename(String originalFilename) {

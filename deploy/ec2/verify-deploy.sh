@@ -137,9 +137,34 @@ JSON
 check_endpoint "Refresh token" "$BASE_URL/api/v1/auth/refresh" "200" "POST" "$refresh_payload" || failures=$((failures + 1))
 
 NEW_ACCESS_TOKEN="$(extract_json_field accessToken)"
+NEW_REFRESH_TOKEN="$(extract_json_field refreshToken)"
 if [[ -n "$NEW_ACCESS_TOKEN" ]]; then
   ACCESS_TOKEN="$NEW_ACCESS_TOKEN"
 fi
+if [[ -z "$NEW_REFRESH_TOKEN" ]]; then
+  echo "[FAIL] Refresh response missing rotated refresh token"
+  failures=$((failures + 1))
+fi
+if [[ -n "$NEW_REFRESH_TOKEN" && "$NEW_REFRESH_TOKEN" == "$REFRESH_TOKEN" ]]; then
+  echo "[FAIL] Refresh token was not rotated"
+  failures=$((failures + 1))
+fi
+
+old_refresh_payload=$(cat <<JSON
+{"refreshToken":"$REFRESH_TOKEN"}
+JSON
+)
+old_refresh_status="$(curl -s -o /tmp/verify_body.txt -w "%{http_code}" \
+  -X POST "$BASE_URL/api/v1/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d "$old_refresh_payload" || true)"
+if [[ "$old_refresh_status" == "200" ]]; then
+  echo "[FAIL] Old refresh token should fail after rotation"
+  failures=$((failures + 1))
+else
+  echo "[PASS] Old refresh token rejected after rotation ($old_refresh_status)"
+fi
+REFRESH_TOKEN="$NEW_REFRESH_TOKEN"
 
 check_endpoint "Logout user" "$BASE_URL/api/v1/auth/logout" "200" "POST" "" "$ACCESS_TOKEN" || failures=$((failures + 1))
 

@@ -33,6 +33,9 @@ function getAuthHeaders() {
             const data = await refreshRes.json();
             // Save NEW access token
             localStorage.setItem("accessToken", data.accessToken);
+            if (data.refreshToken) {
+                localStorage.setItem("refreshToken", data.refreshToken);
+            }
             
             // Retry the original request with the new token
             options.headers['Authorization'] = `Bearer ${data.accessToken}`;
