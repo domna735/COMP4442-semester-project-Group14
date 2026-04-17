@@ -21,6 +21,19 @@ By the end of the demo, you should prove:
 
 ---
 
+## 1.1) Critical Live Notes (2026-04-18)
+
+1. **Do not** use `grep 'pong'` as readiness criteria for `/api/v1/compute/ping`.
+	- Use HTTP status code `200` as the primary startup/health signal.
+2. Ping endpoint currently returns JSON message payload; body-text may evolve, status code is the stable contract for readiness.
+3. For protected file downloads, direct URL open in browser address bar may show `401` because Bearer token is not attached automatically.
+4. Use in-page download button/flow that sends `Authorization: Bearer <accessToken>`.
+5. Keep one fallback terminal proof ready:
+	- no token => `401`
+	- with token => `200`
+
+---
+
 ## 2) Prerequisites
 
 On EC2 host:

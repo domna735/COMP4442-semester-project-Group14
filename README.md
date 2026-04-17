@@ -166,6 +166,14 @@ Artifacts are saved under `evidence/ec2/<timestamp>_<host>/` and include:
 - metadata (`metadata.txt`)
 - optional screenshots (if a headless Chromium browser is available)
 
+### 6.7 Operational notes (2026-04-18)
+
+1. For startup/readiness checks on `/api/v1/compute/ping`, validate HTTP status code (`200`) instead of matching legacy body text such as `pong`.
+2. A polling command that only greps response body may report false negatives even when app is healthy.
+3. Protected file download endpoint requires `Authorization: Bearer <accessToken>`.
+4. Directly opening a protected download URL in browser address bar may return `401` because Authorization header is not attached automatically.
+5. Preferred demo flow: login first, then download from in-page UI action that performs token-authenticated fetch.
+
 ## 7. systemd Service
 
 Template file:

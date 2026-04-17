@@ -912,3 +912,62 @@ Next:
 1. Run `./deploy/ec2/live-verify-archive.sh http://<EC2_PUBLIC_IP>:8080` against the deployed EC2 service.
 2. If screenshots are not auto-captured, add one manual screenshot into the same run folder.
 3. Reference the generated run folder path in `final_submission_evidence_summary.md`.
+
+---
+
+## 2026-04-17 | Public EC2 Reachability Restored + Live Evidence Captured
+
+Intent:
+Confirm the real EC2 deployment is publicly reachable for presentation and generate a final verifiable evidence package.
+
+Action:
+1. Verified remote app health on EC2 host and public ingress behavior:
+  - Public health check returned `PUBLIC_PING=200` for `/api/v1/compute/ping`.
+  - External TCP check succeeded on `3.107.95.44:8080`.
+2. Executed one-command live verification archive:
+  - `./deploy/ec2/live-verify-archive.sh http://3.107.95.44:8080`
+3. Generated evidence folder:
+  - `evidence/ec2/20260417-234836_3.107.95.44_8080/`
+  - Includes: `verify-deploy.log`, `metadata.txt`.
+
+Result:
+The deployed Spring Boot service is now publicly reachable and the verification script passed with archived artifacts for submission/demo traceability.
+
+Decision / Interpretation:
+Cloud demo path is operational and evidence collection is complete for this run. Keep SG `8080` rule temporary for presentation window and remove/restrict afterward.
+
+Next:
+1. Use `http://3.107.95.44:8080` as the primary demo URL.
+2. After presentation, stop EC2 to control Free Tier usage and tighten SG rules.
+
+---
+
+## 2026-04-18 | EC2 Health-Check Logic Fix + Authenticated Download Demo Stabilization
+
+Intent:
+Remove a misleading EC2 startup failure signal, align verification checks with actual API behavior, and stabilize the live demo flow for protected file downloads.
+
+Action:
+1. Reproduced the deployment check issue and confirmed the polling script was using an outdated condition (`grep -q 'pong'`) against `/api/v1/compute/ping`.
+2. Confirmed current ping behavior is HTTP `200` with JSON payload (`{"message":"Compute service is running"}`), not a literal `pong` marker.
+3. Replaced validation mindset from body-string matching to status-code based checks for startup/readiness.
+4. Re-validated cloud endpoint and auth flow using concise status checks:
+  - `PING_LOCAL=200`
+  - `PING_PUBLIC=200`
+  - `LOGIN_STATUS=200`
+  - `ME_STATUS=200`
+5. Re-confirmed protected file API behavior for demo consistency:
+  - download without token returns `401`
+  - same download with Bearer token returns `200`
+6. Synced frontend/demo guidance to emphasize token-authenticated download from UI actions instead of directly opening protected download URLs in browser address bar.
+
+Result:
+False startup alarms were eliminated, cloud health verification became deterministic, and the protected file download demo path is now consistent and reproducible.
+
+Decision / Interpretation:
+For operational checks, HTTP status-based readiness is more robust than brittle string matching in response bodies. For JWT-protected file endpoints, browser direct-link behavior and API behavior must be clearly separated in demo instructions.
+
+Next:
+1. Keep all readiness scripts aligned to status-code checks for `/api/v1/compute/ping`.
+2. Use UI click-download flow (token-authenticated fetch) during live demo.
+3. Keep one fallback terminal proof command ready to show `401` (no token) vs `200` (with token).

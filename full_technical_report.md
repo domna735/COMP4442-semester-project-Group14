@@ -1,7 +1,7 @@
 # Cloud Compute Service
 ## Comprehensive Project Report (Updated)
 
-Date: 2026-04-17  
+Date: 2026-04-18  
 Project: COMP4442 Semester Project Group 14  
 Repository: domna735/COMP4442-semester-project-Group14
 
@@ -481,6 +481,34 @@ Cloud Compute Service now delivers a complete secure microservice workflow with 
 ---
 
 ## References and Project Artifacts
+
+---
+
+## Operational Addendum (2026-04-18)
+
+### A. EC2 Readiness Verification Correction
+
+During final live-run validation, a false startup failure pattern was identified in one polling approach that searched for a legacy body marker (`pong`) from `/api/v1/compute/ping`. The current endpoint contract returns a JSON message and HTTP `200` rather than the literal `pong` string.
+
+Correct operational guidance is therefore:
+1. use HTTP status checks as readiness truth source,
+2. avoid body-string assumptions for health endpoints unless the contract explicitly guarantees the exact marker.
+
+Validated cloud checks (2026-04-18):
+1. local EC2 ping: `200`
+2. public ping: `200`
+3. login: `200`
+4. auth-me: `200`
+
+### B. Protected Download Behavior Clarification
+
+Another recurrent demo confusion came from opening protected file download URLs directly in browser address bar. Because the endpoint expects `Authorization: Bearer <accessToken>`, direct-link navigation can return `401` even when the user has already logged in via frontend state.
+
+Validated behavior:
+1. download without token: `401` (expected)
+2. download with Bearer token: `200` (expected)
+
+The frontend flow now uses token-authenticated fetch for download actions in UI so that file download behavior remains aligned with JWT-protected API design.
 
 Primary project artifacts:
 

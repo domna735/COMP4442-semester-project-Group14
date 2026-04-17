@@ -8,6 +8,11 @@
 - Local default DB is SQLite (`comp4442.db`), and production uses env-driven MySQL/PostgreSQL.
 - File upload/download endpoints are now protected and included in verification flow.
 
+**Operational Clarification (2026-04-18):**
+- For `/api/v1/compute/ping`, check HTTP `200` as readiness; do not rely on searching response body for legacy `pong` text.
+- Protected file download URL opened directly in browser may return `401` if Bearer token is not attached.
+- Demo should use the UI download action (token-authenticated fetch flow) to prove authorized file access.
+
 **Preparation Time:** 5 minutes (before demo starts)  
 **Demo Duration:** 12 minutes (including Q&A buffer)  
 **Walkthrough Order:** Auth Flow → Task Management → User Isolation → Data Persistence
@@ -16,6 +21,103 @@
 - **[test_execution_guide.md](test_execution_guide.md)** — Comprehensive manual testing procedures (34 test cases, critical path validation)
 - **[playbook.md](playbook.md)** — Operational setup and configuration guide
 - **[README.md](README.md)** — Quick-start reference
+
+---
+
+## EC2 Live Demo Mode (For Real Cloud Presentation)
+
+Use this section when presenting on your real AWS instance instead of localhost.
+
+### A. Current EC2 target
+
+- Instance Name: COMP4442 Semester Project Group 14
+- Instance ID: i-0f2d54704d5c42a6a
+- Public DNS: ec2-3-107-95-44.ap-southeast-2.compute.amazonaws.com
+- Public IP: 3.107.95.44
+- SSH Key: COMP4442 Semester Project Group 14.pem
+
+### B. Required AWS Security Group rule (critical)
+
+Your app is confirmed healthy inside EC2 (localhost:8080 returns 200). To allow audience/public browser access, make sure inbound rules include:
+
+- TCP 22 from your IP (or demo environment range)
+- TCP 8080 from your demo source
+
+Recommended for classroom demo:
+
+- TCP 8080 from 0.0.0.0/0 (temporary)
+
+After demo, remove or narrow this rule.
+
+### C. One-minute pre-demo verification
+
+Run from your local machine:
+
+```bash
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@3.107.95.44 "curl -s -o /dev/null -w 'LOCAL_PING=%{http_code}' http://localhost:8080/api/v1/compute/ping"
+curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://3.107.95.44:8080/api/v1/compute/ping
+```
+
+Expected before presentation starts:
+
+- LOCAL_PING=200
+- PUBLIC_PING=200
+
+If PUBLIC_PING is 000/connection refused, fix Security Group inbound TCP 8080 first.
+
+### D. Demo URLs (EC2 mode)
+
+- Home: http://3.107.95.44:8080
+- Register: http://3.107.95.44:8080/register.html
+- Login: http://3.107.95.44:8080/login.html
+- Task: http://3.107.95.44:8080/task.html
+- Swagger: http://3.107.95.44:8080/swagger-ui/index.html
+
+### D1. English 30-second stage script (ready to read)
+
+"Good morning/afternoon. Our Spring Boot service is running on a real AWS EC2 public endpoint.
+I will first show login and task creation with User A, then log out and sign in as User B.
+User B cannot see User A's tasks, which proves strict user-level isolation.
+Finally, I will open Swagger and show protected APIs and successful responses.
+This demonstrates end-to-end functionality: authentication, authorization, task CRUD, and secure API access in a real cloud environment."
+
+### D2. English click order for live demo (fast path)
+
+1. Open `http://3.107.95.44:8080`
+2. Click `Login` and sign in with prepared account A.
+3. Open `task.html`, create one task, and show it in list.
+4. Click `Logout`.
+5. Login with account B.
+6. Show account B task list does not contain account A data.
+7. Open `http://3.107.95.44:8080/swagger-ui/index.html` and expand one protected endpoint.
+8. Conclude with: "Auth + isolation + CRUD + API docs are all working on EC2."
+
+### E. Optional: start/restart app on EC2 (if needed)
+
+```bash
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@3.107.95.44
+cd ~/COMP4442-semester-project-Group14
+pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true
+nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &
+tail -n 60 ~/cloud-compute-prod.log
+```
+
+### F. Fallback demo route (if public 8080 is blocked)
+
+If PUBLIC_PING is still 000 but LOCAL_PING is 200, use SSH local port forwarding:
+
+```bash
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" -L 8080:localhost:8080 ubuntu@3.107.95.44
+```
+
+Keep this terminal open, then demo with local browser URLs:
+
+- http://localhost:8080
+- http://localhost:8080/login.html
+- http://localhost:8080/task.html
+- http://localhost:8080/swagger-ui/index.html
+
+This still runs the backend on EC2, but traffic is tunneled through SSH.
 
 ---
 
@@ -245,11 +347,10 @@
      ```bash
      curl -X POST http://localhost:8080/api/v1/auth/login \
        -H "Content-Type: application/json" \
-       -c cookies.txt \
        -d '{"username": "bob", "password": "BobPass456!"}'
      ```
    - Show JSON response with user info
-   - **Speaking:** "REST APIs return structured JSON. The session is managed via HTTP cookies."
+    - **Speaking:** "REST APIs return structured JSON. Subsequent protected calls include Bearer access token in Authorization header."
 
 ---
 
@@ -271,6 +372,52 @@ All components work together to provide secure, isolated multi-user task managem
 ---
 
 ## Troubleshooting During Demo
+
+### Issue: Real online version cannot login
+**Quick diagnosis status (verified on 2026-04-17):**
+- Public backend API is healthy and login endpoint works on EC2.
+- Full deploy verification against `http://3.107.95.44:8080` passed (register/login/tasks/files/refresh/logout).
+
+**Likely causes are browser-side state, not backend service.**
+
+**Fix steps (in order):**
+1. Open `http://3.107.95.44:8080/login.html` directly (avoid stale tabs).
+2. Clear site storage for `3.107.95.44:8080` (Local Storage + cookies).
+3. Hard refresh (`Ctrl+Shift+R`).
+4. Retry login with a known valid account.
+5. If still failing, open browser DevTools > Network and check `POST /api/v1/auth/login`:
+    - `200`: backend is fine, check frontend token handling and page redirect.
+    - `401`: wrong username/password.
+    - `4xx/5xx`: capture response body and check EC2 app log.
+
+**Server-side confirmation commands:**
+```bash
+curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://3.107.95.44:8080/api/v1/compute/ping
+curl -s -X POST http://3.107.95.44:8080/api/v1/auth/login \
+   -H "Content-Type: application/json" \
+   -d '{"username":"<your_user>","password":"<your_password>"}'
+```
+
+If first command returns `200` and login API returns token JSON, backend is working correctly.
+
+### Issue: Ping polling shows repeated timeout but service is actually healthy
+**Cause:** polling script checks response body for `pong` instead of checking HTTP status.
+
+**Fix:**
+1. Use status-based probe:
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" http://3.107.95.44:8080/api/v1/compute/ping
+   ```
+2. Treat `200` as healthy.
+
+### Issue: Download shows Unauthorized even after login
+**Cause:** direct browser navigation to protected download URL may not attach `Authorization: Bearer` header.
+
+**Fix:**
+1. Download from in-page UI action (token-authenticated fetch).
+2. If needed, verify behavior explicitly:
+   - without token: `401`
+   - with token: `200`
 
 ### Issue: Application is slow to start
 **Solution:** Start application **30 seconds before demo begins**. Show Swagger docs while loading.
@@ -322,6 +469,16 @@ mvn spring-boot:run
 - [ ] Note any improvements or feature requests from audience
 - [ ] Keep application running for extended Q&A if needed
 
+### Cost-control shutdown (Free Tier friendly)
+
+After finishing demo and evidence capture:
+
+1. EC2 Console → Instance Actions → Stop instance
+2. Confirm status becomes Stopped
+3. Keep notes of:
+   - Public IP/DNS may change on next start (unless Elastic IP is attached)
+   - If IP changes, update URLs in this playbook before next demo
+
 ---
 
 ## Time Allocation
@@ -330,7 +487,7 @@ mvn spring-boot:run
 Total: 12 minutes
 
 Segment 1 (Auth & Registration):  3 min → 3 min elapsed
-Segment 2 (Login & Session):      2 min → 5 min elapsed
+Segment 2 (Login & Token):        2 min → 5 min elapsed
 Segment 3 (Task CRUD):            2.5 min → 7.5 min elapsed
 Segment 4 (User Isolation):       2.5 min → 10 min elapsed
 Segment 5 (Update & Delete):      1.5 min → 11.5 min elapsed
@@ -356,7 +513,7 @@ Buffer: Handle Q&A or technical issues
 
 > "In summary, we've demonstrated a fully functional multi-user task management system built with Spring Boot and Spring Security. The architecture implements:
 >
-> - **Secure Authentication:** BCrypt password hashing, session management
+> - **Secure Authentication:** BCrypt password hashing, JWT access+refresh token flow
 > - **User Isolation:** User-scoped database queries prevent cross-user data access
 > - **REST API:** Well-documented endpoints with proper HTTP status codes
 > - **Clean UI:** Responsive HTML pages with real-time feedback
@@ -366,5 +523,5 @@ Buffer: Handle Q&A or technical issues
 ---
 
 **Demo Version:** 1.0  
-**Last Updated:** 2026-03-28  
+**Last Updated:** 2026-04-18  
 **Estimated Demo Time:** 12 minutes + Q&A
