@@ -51,7 +51,7 @@ class TaskUiAndApiIntegrationTests {
     }
 
     @Test
-    void shouldServePublicPagesAndProtectTaskPage() throws Exception {
+        void shouldServePublicPagesAndProtectProtectedApis() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(forwardedUrl("index.html"));
@@ -67,8 +67,8 @@ class TaskUiAndApiIntegrationTests {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/task.html").accept(MediaType.TEXT_HTML))
-                .andExpect(status().isFound())
-                .andExpect(redirectedUrl("/login.html"));
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task Page")));
 
         mockMvc.perform(get("/api/v1/tasks"))
                 .andExpect(status().isUnauthorized());

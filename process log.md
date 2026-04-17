@@ -971,3 +971,40 @@ Next:
 1. Keep all readiness scripts aligned to status-code checks for `/api/v1/compute/ping`.
 2. Use UI click-download flow (token-authenticated fetch) during live demo.
 3. Keep one fallback terminal proof command ready to show `401` (no token) vs `200` (with token).
+
+---
+
+## 2026-04-18 | Academic Essay Report Refinement + Full Validation Re-Run
+
+Intent:
+Produce a more academically oriented technical essay version of the full report, then run full project validation and align test expectations with current security design.
+
+Action:
+1. Refined `full_technical_report academically technical essay version.md` with stronger academic framing:
+  - clearer problem statement and research-style questions,
+  - methodology emphasis (design-implementation-verification lifecycle),
+  - explicit evidence table for verification outcomes,
+  - strengthened validity/limitation discussion using technical-report style language.
+2. Executed full validation workflow:
+  - `mvn -q clean test`
+  - `./scripts/one-click-dev.sh --stop-after-test`
+  - `./scripts/one-click-dev.sh`
+  - `./deploy/ec2/verify-deploy.sh http://localhost:8080`
+3. Diagnosed a single integration-test mismatch after recent security/page-access updates:
+  - `TaskUiAndApiIntegrationTests.shouldServePublicPagesAndProtectTaskPage` expected `302` redirect for `/task.html`,
+  - actual behavior is `200` because `/task.html` is intentionally public and APIs remain protected.
+4. Updated test expectation accordingly:
+  - renamed test to `shouldServePublicPagesAndProtectProtectedApis`,
+  - changed `/task.html` assertion from redirect (`302`) to page served (`200`) with content check,
+  - retained protected API unauthenticated assertion (`/api/v1/tasks` -> `401`).
+
+Result:
+The report is now closer to an academically technical essay style, and project verification is consistent with implemented security boundaries (public static pages + protected business APIs).
+
+Decision / Interpretation:
+This round resolved the gap between historical test assumptions and current architecture behavior. Static page accessibility and API protection should be validated as separate concerns in regression tests.
+
+Next:
+1. Keep integration tests synchronized with documented security policy whenever route accessibility changes.
+2. Use the academically refined report as the primary technical narrative source for final `.docx` preparation.
+3. Continue final evidence packaging with latest test/deploy outputs and commit references.

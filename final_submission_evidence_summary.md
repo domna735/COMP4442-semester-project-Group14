@@ -1,18 +1,19 @@
 # Final Submission Evidence Summary
 
-Date: 2026-04-17  
+Date: 2026-04-18  
 Project: COMP4442 Semester Project Group 14  
 Repository: https://github.com/domna735/COMP4442-semester-project-Group14
 
 ## Current Submission Snapshot
 - Branch: `main`
-- Latest documentation alignment commit: `61bacc3`
+- Latest documentation alignment commit: `5056204`
+- Latest repository sync commit: `d53b939`
 - Commit pushed to remote: Yes
 
 ## What Is Verified
-- Automated tests pass (`mvn clean test`, 4/4 tests passing).
+- Automated tests pass (`mvn clean test`, 7/7 tests passing after route expectation alignment).
 - One-command smoke flow passes (register/login/me/task CRUD/refresh/logout/file APIs).
-- Deployment verification script passes (health, OpenAPI, auth flow, task flow, file flow, protected-route checks).
+- Deployment verification script passes (health, OpenAPI, auth flow, task flow, file flow, protected-route checks, refresh rotation assertion).
 
 ## Evidence Artifacts Included
 - Local smoke/deploy outputs in `uploads/`:
@@ -27,6 +28,7 @@ Repository: https://github.com/domna735/COMP4442-semester-project-Group14
 ## Key Supporting Documents
 - `README.md`
 - `full_technical_report.md`
+- `full_technical_report academically technical essay version.md`
 - `report.md`
 - `ppt.md`
 - `ppt_script.md`
