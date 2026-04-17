@@ -7,9 +7,11 @@ USERNAME="demo_user_$(date +%s)"
 EMAIL="${USERNAME}@example.com"
 PASSWORD="DemoPass123!"
 TASK_TITLE="Smoke test task $(date +%H%M%S)"
+UPLOAD_FILE="$(mktemp /tmp/smoke-upload-XXXXXX.txt)"
 
 cleanup() {
   rm -f "$COOKIE_JAR"
+  rm -f "$UPLOAD_FILE"
 }
 trap cleanup EXIT
 
@@ -68,6 +70,7 @@ require_cmd curl
 
 echo "== Cloud Compute API Smoke Test =="
 echo "Base URL: $BASE_URL"
+echo "Smoke upload $(date)" > "$UPLOAD_FILE"
 
 code="$(http_code GET "$BASE_URL/api/v1/compute/ping")"
 assert_status "$code" "200" "Ping endpoint"
@@ -119,11 +122,40 @@ if [[ -n "$NEW_ACCESS_TOKEN" ]]; then
   ACCESS_TOKEN="$NEW_ACCESS_TOKEN"
 fi
 
+upload_status="$(curl -sS -o /tmp/smoke_response.json -w "%{http_code}" \
+  -X POST "$BASE_URL/api/v1/files/upload" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -F "file=@$UPLOAD_FILE;filename=smoke-test.txt")"
+assert_status "$upload_status" "200" "Upload file"
+
+UPLOADED_FILE_NAME="$(sed -n 's/.*File uploaded successfully: \(.*\)/\1/p' /tmp/smoke_response.json | head -n 1)"
+if [[ -z "$UPLOADED_FILE_NAME" ]]; then
+  echo "[FAIL] Upload response missing stored filename"
+  cat /tmp/smoke_response.json || true
+  exit 1
+fi
+
+code="$(http_code GET "$BASE_URL/api/v1/files/list" "" "$ACCESS_TOKEN")"
+assert_status "$code" "200" "List files"
+if ! grep -q "$UPLOADED_FILE_NAME" /tmp/smoke_response.json; then
+  echo "[FAIL] Uploaded file is not listed"
+  cat /tmp/smoke_response.json || true
+  exit 1
+fi
+
+download_status="$(curl -sS -o /tmp/smoke_response_download.bin -w "%{http_code}" \
+  -X GET "$BASE_URL/api/v1/files/download/$UPLOADED_FILE_NAME" \
+  -H "Authorization: Bearer $ACCESS_TOKEN")"
+assert_status "$download_status" "200" "Download file"
+
 code="$(http_code POST "$BASE_URL/api/v1/auth/logout" "" "$ACCESS_TOKEN")"
 assert_status "$code" "200" "Logout user"
 
 code="$(http_code GET "$BASE_URL/api/v1/tasks")"
 assert_status "$code" "401" "Reject unauthenticated tasks access"
+
+code="$(http_code GET "$BASE_URL/api/v1/files/list")"
+assert_status "$code" "401" "Reject unauthenticated file list access"
 
 echo "All smoke tests passed."
 echo "Created user: $USERNAME"

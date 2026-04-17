@@ -2,6 +2,12 @@
 
 **Purpose:** Step-by-step guide for executing a live 12-minute demonstration of the Cloud Compute Service during presentation.
 
+**Important Update (2026-04-17):**
+- Authentication is now JWT access + refresh token, not server session cookie.
+- Protected API calls use `Authorization: Bearer <accessToken>`.
+- Local default DB is SQLite (`comp4442.db`), and production uses env-driven MySQL/PostgreSQL.
+- File upload/download endpoints are now protected and included in verification flow.
+
 **Preparation Time:** 5 minutes (before demo starts)  
 **Demo Duration:** 12 minutes (including Q&A buffer)  
 **Walkthrough Order:** Auth Flow → Task Management → User Isolation → Data Persistence
@@ -26,13 +32,13 @@
 - [ ] **Verify Application is Running**
   - Open browser: http://localhost:8080
   - Expected: Home page with "Cloud Compute Service" and navigation links
-  - Open Swagger API docs: http://localhost:8080/swagger-ui.html
+   - Open Swagger API docs: http://localhost:8080/swagger-ui/index.html
   - Expected: All endpoints visible
 
-- [ ] **Clear Browser Cookies/Session (Important!)**
-  - Press `Ctrl+Shift+Delete` (or Cmd+Shift+Delete on Mac)
-  - Delete all cookies for localhost
-  - This ensures demo starts with unauthenticated state
+- [ ] **Clear Browser Local Storage + Cookies (Important!)**
+   - Press `Ctrl+Shift+Delete` (or Cmd+Shift+Delete on Mac)
+   - Delete site data for localhost (cookies + local storage)
+   - This ensures demo starts with unauthenticated state
 
 - [ ] **Have Browser Windows Ready**
   - **Tab 1:** http://localhost:8080 (home page)
@@ -84,7 +90,7 @@
 ### **SEGMENT 2: Login & Session Establishment (2 Minutes)**
 
 **Speaking Points:**
-> "After registration, users log in. Spring Security creates a session that persists across all subsequent requests. The session is stored in the browser (HttpSession) and validated on each API call."
+> "After registration, users log in and receive an access token plus a refresh token. The frontend stores them client-side and sends the access token as Bearer authorization for protected APIs."
 
 **Action Steps:**
 
@@ -97,18 +103,18 @@
    - Show "Signed in as alice" message at top of page
    - **Speaking:** "Upon login, AuthService calls Spring's AuthenticationManager to verify credentials against the database. If valid, a SecurityContext is created and stored in the HTTP session."
 
-2. **Show Session Cookie** (1:00 - 1:30)
+2. **Show Token Storage** (1:00 - 1:30)
    - Open Browser Dev Tools (F12)
-   - Go to Storage → Cookies → localhost:8080
-   - Show `JSESSIONID` cookie
-   - **Speaking:** "This cookie maintains the authenticated session. All subsequent API requests send this cookie, and Spring Security automatically validates it."
+   - Go to Application → Local Storage → localhost:8080
+   - Show `accessToken` and `refreshToken`
+   - **Speaking:** "The access token secures API calls. If it expires, refresh endpoint issues a new one without full re-login."
 
 3. **Inspect Browser Network Traffic** (1:30 - 2:00)
    - Open Network tab in Dev Tools
    - Refresh task.html
-   - Show GET request with Cookie header containing JSESSIONID
+   - Show GET request with `Authorization: Bearer ...`
    - Show response: GET /api/v1/auth/me returns current user info
-   - **Speaking:** "Behind the scenes, task.html calls GET /api/v1/auth/me to verify the session is still valid. If no session, it automatically redirects to login.html."
+   - **Speaking:** "Behind the scenes, task.html calls GET /api/v1/auth/me using bearer token. If token is missing/invalid, the page redirects to login."
 
 ---
 
@@ -257,8 +263,8 @@
 2. **Backend:** Spring Boot with Spring Security for authentication
 3. **Business Logic:** Service layer with user-scoped CRUD operations
 4. **Data Access:** Spring Data JPA repositories with user filtering
-5. **Persistence:** SQL database (H2 for dev, MySQL/PostgreSQL for prod)
-6. **Security:** BCrypt password hashing, session-based auth, user-scoped queries
+5. **Persistence:** SQL database (SQLite for local dev, MySQL/PostgreSQL for prod)
+6. **Security:** BCrypt password hashing, JWT access+refresh, user-scoped queries
 
 All components work together to provide secure, isolated multi-user task management."
 
@@ -273,11 +279,7 @@ All components work together to provide secure, isolated multi-user task managem
 **Solution:** Press back button or type URL directly to login page. Re-login quickly.
 
 ### Issue: Forgot task ID or data got mixed up
-**Solution:** Open H2 console (http://localhost:8080/h2-console) and manually view database tables in real-time:
-```sql
-SELECT * FROM app_user; -- View all registered users
-SELECT * FROM task;      -- View all tasks
-```
+**Solution:** Use API calls in Swagger (`GET /api/v1/tasks`) after login to inspect current user task list.
 
 ### Issue: Browser shows "Connection refused"
 **Solution:** Open terminal and check if app is still running. If needed, restart:
@@ -298,8 +300,7 @@ mvn spring-boot:run
 | Register Page | http://localhost:8080/register.html |
 | Login Page | http://localhost:8080/login.html |
 | Task Page | http://localhost:8080/task.html |
-| Swagger Docs | http://localhost:8080/swagger-ui.html |
-| H2 Console | http://localhost:8080/h2-console |
+| Swagger Docs | http://localhost:8080/swagger-ui/index.html |
 
 ---
 

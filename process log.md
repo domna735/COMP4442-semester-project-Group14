@@ -658,3 +658,72 @@ Next:
 1. Implement upload quarantine pipeline with Docker scanner integration and fail-closed behavior.
 2. Add automated tests for upload allowlist, blocked file types, and quarantine outcomes.
 3. Execute live EC2 verification and attach logs/screenshots as final evidence artifacts.
+
+---
+
+## 2026-04-17 | File Upload Safety Audit + Token Connectivity and EC2 Service Verification
+
+Intent:
+Validate whether current file upload behavior is safe enough for project demonstration, and verify that JWT token migration is fully connected across tests, smoke checks, and deployment verification flow.
+
+Action:
+Reviewed and hardened file upload security path in backend and scripts:
+
+- Updated security policy so `/api/v1/files/**` requires authentication, and removed unintended permissive fallback by setting unmatched routes to authenticated by default.
+- Hardened upload handling in `FileController` by adding filename sanitization, path traversal checks, extension allowlist validation, and randomized server-side storage names.
+- Added download path boundary validation to reject unsafe paths.
+- Extended `scripts/smoke-test.sh` with file security checks (unauthenticated file-list rejection) plus authenticated upload/list/download verification.
+- Extended `deploy/ec2/verify-deploy.sh` with file endpoint checks for unauthenticated rejection and authenticated upload/list/download flow.
+- Updated integration test expectation to match protected page behavior (`/task.html` redirects to `/login.html` when unauthenticated).
+
+Executed verification runs:
+
+- `mvn clean test`
+- `./scripts/one-click-dev.sh --stop-after-test`
+- `./deploy/ec2/verify-deploy.sh http://localhost:8080`
+
+Result:
+All validation paths passed after hardening.
+
+- Maven tests: 4/4 passed (0 failures, 0 errors)
+- Smoke test: full JWT + refresh + file upload/list/download flow passed
+- Deploy verifier (localhost simulation of EC2 checks): all checks passed including file endpoint auth behavior
+
+Decision / Interpretation:
+The current implementation is significantly safer than before and token-based connectivity is consistent end-to-end. File endpoints now enforce authentication and common traversal/name abuse vectors are blocked. However, upload security is not yet "production-complete" because malware scanning and deep content inspection are not implemented yet.
+
+Next:
+1. Run `deploy/ec2/verify-deploy.sh <ec2-base-url>` on live EC2 and archive output.
+2. Add content signature/MIME sniffing and optional checksum logging for uploads.
+3. Implement Docker quarantine scanning before making uploaded files downloadable.
+
+---
+
+## 2026-04-17 | Server Database Setup Flow and Playbook Synchronization
+
+Intent:
+Prepare a safer and repeatable server-side database setup process for EC2 production service and update team documentation so it matches the current JWT + SQLite/RDS architecture.
+
+Action:
+Implemented deployment setup improvements:
+
+- Added `deploy/ec2/setup-db.sh` to validate production DB environment values, parse JDBC URL, verify host/port reachability, and optionally test SQL login credentials (MySQL/PostgreSQL clients when available).
+- Updated `deploy/ec2/.env.prod.example` with current required variables, including JWT key path environment variables and SQLite fallback example for single-server demo mode.
+- Updated `deploy/ec2/run-prod.sh` to enforce required DB/JWT variables before startup and print preflight runtime context.
+
+Updated documentation files to reflect what has been completed:
+
+- `playbook.md`: replaced outdated H2/session-focused guidance with SQLite-default dev + EC2/RDS production setup flow, including new `setup-db.sh` usage.
+- `one_command_playbook.md`: updated smoke flow to include refresh token and protected file upload/list/download checks, plus unauthenticated `401` checks.
+- `realtime_demo_playbook.md`: corrected demo narrative to JWT access/refresh token behavior and updated Swagger URL/reference steps.
+
+Result:
+Server database setup for deployment is now easier to execute and diagnose. Production startup has stronger preflight validation, and the key operational/demonstration documents are aligned with the current implementation state.
+
+Decision / Interpretation:
+Adding a dedicated DB setup check script reduces EC2/RDS onboarding errors and shortens troubleshooting time. Keeping playbooks synchronized with real code behavior (JWT, SQLite default, protected file APIs) improves demo reliability and report consistency.
+
+Next:
+1. Fill `deploy/ec2/.env.prod` with real RDS and JWT key values on EC2.
+2. Run `./deploy/ec2/setup-db.sh deploy/ec2/.env.prod` on EC2 before starting service.
+3. Start service with `./deploy/ec2/run-prod.sh`, then run `./deploy/ec2/verify-deploy.sh <ec2-base-url>` and archive outputs.

@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -62,8 +63,8 @@ class TaskUiAndApiIntegrationTests {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/task.html").accept(MediaType.TEXT_HTML))
-                .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("function ensureAuth")));
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/login.html"));
 
         mockMvc.perform(get("/api/v1/tasks"))
                 .andExpect(status().isUnauthorized());

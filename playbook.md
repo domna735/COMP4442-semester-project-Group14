@@ -40,7 +40,7 @@ This document provides a comprehensive step-by-step guide to set up, configure, 
   - Download: https://git-scm.com/
   - Verify: `git --version`
 
-- **MySQL** or **PostgreSQL** (for production only; H2 in-memory used for development)
+- **MySQL** or **PostgreSQL** client tools (optional, recommended for production DB connectivity checks)
   - MySQL 8.0+: https://dev.mysql.com/downloads/mysql/
   - PostgreSQL 12+: https://www.postgresql.org/download/
 
@@ -166,102 +166,64 @@ ls -la src/main/resources/
 
 ## Database Configuration
 
-### Development Environment (H2 In-Memory)
+### Development Environment (SQLite Default)
 
-**Default Configuration** — No setup required. H2 is embedded in the Spring Boot dependency.
+Default local profile uses SQLite file persistence so data survives restarts.
 
-**Profile:** `dev` (set as default in `application.properties`)
+**Profile:** `dev` (default)
 
-**Properties File:** `src/main/resources/application-dev.properties`
-```properties
-spring.datasource.url=jdbc:h2:mem:cloudcompute;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-```
-
-**H2 Console Access:**
-- URL: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:cloudcompute`
-- Username: `sa`
-- Password: (leave blank)
+**Key behavior:**
+- Database file: `comp4442.db`
+- Hibernate auto-creates/updates tables at startup
+- No external DB server required for local development
 
 ---
 
-### Production Environment (MySQL or PostgreSQL)
+### Production Environment (EC2 + RDS MySQL/PostgreSQL)
 
-#### Option A: MySQL 8.0+
+Use the template in `deploy/ec2/.env.prod.example` and create `deploy/ec2/.env.prod` with real values.
 
-**Step 1: Create MySQL Database**
+Required values:
+- `DB_URL`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_DRIVER_CLASS_NAME`
+- `JWT_PRIVATE_KEY_PATH`
+- `JWT_PUBLIC_KEY_PATH`
+
+#### Step 1: Prepare env file
 ```bash
-mysql -u root -p
+cp deploy/ec2/.env.prod.example deploy/ec2/.env.prod
 ```
 
-**Step 2: In MySQL Console:**
-```sql
-CREATE DATABASE cloudcompute;
-CREATE USER 'cc_user'@'localhost' IDENTIFIED BY 'cc_password_123';
-GRANT ALL PRIVILEGES ON cloudcompute.* TO 'cc_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
-```
-
-**Step 3: Configure Environment Variables**
+#### Step 2: Fill DB and key values in `.env.prod`
+MySQL example:
 ```bash
-export DB_URL="jdbc:mysql://localhost:3306/cloudcompute"
-export DB_USERNAME="cc_user"
-export DB_PASSWORD="cc_password_123"
-export DB_DRIVER_CLASS_NAME="com.mysql.cj.jdbc.Driver"
-export SPRING_PROFILES_ACTIVE="prod"
+DB_URL=jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+DB_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
 ```
 
-**Step 4: Verify Connection**
+PostgreSQL example:
 ```bash
-mysql -u cc_user -p -h localhost -e "use cloudcompute; show tables;"
+DB_URL=jdbc:postgresql://<RDS_ENDPOINT>:5432/<DB_NAME>
+DB_DRIVER_CLASS_NAME=org.postgresql.Driver
 ```
 
----
-
-#### Option B: PostgreSQL 12+
-
-**Step 1: Create PostgreSQL Database**
+#### Step 3: Verify EC2 database connectivity
 ```bash
-sudo -u postgres psql
+chmod +x deploy/ec2/setup-db.sh
+./deploy/ec2/setup-db.sh deploy/ec2/.env.prod
 ```
 
-**Step 2: In PostgreSQL Console:**
-```sql
-CREATE DATABASE cloudcompute;
-CREATE USER cc_user WITH PASSWORD 'cc_password_123';
-ALTER ROLE cc_user SET client_encoding TO 'utf8';
-ALTER ROLE cc_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE cc_user SET default_transaction_deferrable TO on;
-ALTER ROLE cc_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE cloudcompute TO cc_user;
-\c cloudcompute
-GRANT ALL ON SCHEMA public TO cc_user;
-\q
-```
+This script validates env variables, parses JDBC URL, checks host/port reachability, and (if client tools are installed) runs a credential login test.
 
-**Step 3: Configure Environment Variables**
+#### Step 4: Start service in production profile
 ```bash
-export DB_URL="jdbc:postgresql://localhost:5432/cloudcompute"
-export DB_USERNAME="cc_user"
-export DB_PASSWORD="cc_password_123"
-export DB_DRIVER_CLASS_NAME="org.postgresql.Driver"
-export SPRING_PROFILES_ACTIVE="prod"
+chmod +x deploy/ec2/run-prod.sh
+./deploy/ec2/run-prod.sh
 ```
 
-**Step 4: Verify Connection**
-```bash
-psql -U cc_user -h localhost -d cloudcompute -c "SELECT version();"
-```
+`run-prod.sh` now enforces required DB/JWT env values before startup.
 
 ---
 
@@ -345,7 +307,7 @@ mvn spring-boot:run
 **Application Ready:**
 - Base URL: http://localhost:8080
 - Swagger UI: http://localhost:8080/swagger-ui.html
-- H2 Console: http://localhost:8080/h2-console (dev profile only)
+- OpenAPI: http://localhost:8080/swagger-ui/index.html
 
 ---
 
@@ -475,7 +437,7 @@ Error (401 Unauthorized):
 #### 3. Get Current User Info
 ```
 GET /api/v1/auth/me
-Authorization: (Session cookie)
+Authorization: Bearer <accessToken>
 
 Response (200 OK):
 {
@@ -496,7 +458,7 @@ Error (401 Unauthorized):
 #### 4. Logout User
 ```
 POST /api/v1/auth/logout
-Authorization: (Session cookie)
+Authorization: Bearer <accessToken>
 
 Response (200 OK):
 {
@@ -513,7 +475,7 @@ Response (200 OK):
 ```
 POST /api/v1/tasks
 Content-Type: application/json
-Authorization: (Session cookie - Required)
+Authorization: Bearer <accessToken> (Required)
 
 Request Body:
 {
@@ -544,7 +506,7 @@ Error (401 Unauthorized):
 #### 2. Get All Tasks (Current User)
 ```
 GET /api/v1/tasks
-Authorization: (Session cookie - Required)
+Authorization: Bearer <accessToken> (Required)
 
 Response (200 OK):
 [
@@ -572,7 +534,7 @@ Response (200 OK):
 #### 3. Get Task by ID
 ```
 GET /api/v1/tasks/{id}
-Authorization: (Session cookie - Required)
+Authorization: Bearer <accessToken> (Required)
 
 Response (200 OK):
 {
@@ -597,7 +559,7 @@ Error (404 Not Found):
 ```
 PUT /api/v1/tasks/{id}
 Content-Type: application/json
-Authorization: (Session cookie - Required)
+Authorization: Bearer <accessToken> (Required)
 
 Request Body:
 {

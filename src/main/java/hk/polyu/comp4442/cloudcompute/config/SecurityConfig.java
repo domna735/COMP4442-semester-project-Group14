@@ -36,8 +36,6 @@ public class SecurityConfig {
                                 "/login.html",
                                 "/register.html",
                                 "/js/**",
-                                "/task.html",
-                                "/edit.html", // add this to allow JWT work
                                 "/api/v1/auth/refresh", // add refresh end point
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
@@ -45,10 +43,10 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
                         .permitAll()
-                        .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/auth/me",
-                                "/api/v1/auth/logout")
+                    .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/files/**", "/api/v1/auth/me",
+                        "/api/v1/auth/logout")
                         .authenticated()
-                        .anyRequest().permitAll())
+                    .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     String uri = request.getRequestURI();
                     if (uri.endsWith(".html") && !uri.equals("/login.html")) {
