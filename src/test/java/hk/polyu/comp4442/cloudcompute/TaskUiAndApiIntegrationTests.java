@@ -9,11 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -173,6 +177,47 @@ class TaskUiAndApiIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(staleRefreshPayload)))
                 .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void shouldReturn4xxForTraversalStyleDownloadRequest() throws Exception {
+        String accessToken = registerAndLogin("download_user", "download_user@example.com", "password123");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/files/download/../../evil.txt")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn();
+
+        int statusCode = result.getResponse().getStatus();
+        assertTrue(statusCode == 400 || statusCode == 404,
+                "Expected traversal request to be rejected with 400/404 but got: " + statusCode);
+    }
+
+    @Test
+    void shouldRejectUnsafeOrOversizedUploads() throws Exception {
+        String accessToken = registerAndLogin("file_guard_user", "file_guard_user@example.com", "password123");
+
+        MockMultipartFile exeFile = new MockMultipartFile(
+                "file",
+                "malware.exe",
+                "application/octet-stream",
+                "MZ binary".getBytes());
+
+        mockMvc.perform(multipart("/api/v1/files/upload")
+                        .file(exeFile)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isUnsupportedMediaType());
+
+        byte[] largePayload = new byte[(5 * 1024 * 1024) + 1];
+        MockMultipartFile oversizedFile = new MockMultipartFile(
+                "file",
+                "big.txt",
+                "text/plain",
+                largePayload);
+
+        mockMvc.perform(multipart("/api/v1/files/upload")
+                        .file(oversizedFile)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isPayloadTooLarge());
     }
 
         private String registerAndLogin(String username, String email, String password) throws Exception {

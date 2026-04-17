@@ -815,3 +815,72 @@ Next:
 1. Update smoke/deploy scripts to add explicit refresh-rotation assertion (old refresh token rejected after refresh).
 2. Consider moving refresh token to `HttpOnly` secure cookie in a future hardening iteration.
 3. Add file MIME/signature checks and optional malware-scanning stage for uploaded files.
+
+---
+
+## 2026-04-17 | Three-Tier Runtime Validation and File Upload Security Re-Check
+
+Intent:
+Confirm the full three-tier system is operational end-to-end and verify that file upload controls hold under practical abuse scenarios.
+
+Action:
+Executed full runtime checks across backend API, auth flow, task flow, and file flow using local startup + automated scripts + targeted curl probes:
+
+1. Operational checks:
+  - Ran local one-click smoke flow and deployment verification checks against localhost.
+  - Re-validated auth register/login/refresh/logout and task CRUD flows.
+
+2. File security checks:
+  - Verified cross-user file isolation at runtime (user B cannot list/download user A files).
+  - Verified extension allowlist enforcement (disallowed extension upload rejected with `415`).
+  - Hardened download path handling by sanitizing download filename input in `FileController` (same validation model as upload).
+
+3. Stability verification:
+  - Ran focused integration tests again (`CloudComputeServiceApplicationTests`, `TaskUiAndApiIntegrationTests`) and confirmed pass.
+
+Result:
+Three-tier behavior is functioning in runtime checks, core features remain usable, and file-upload ownership/extension protections are effective. Download path normalization is now stricter via server-side filename sanitization.
+
+Decision / Interpretation:
+Current build is acceptable for controlled demo/submission use with meaningful hardening in place. One behavior to refine in a later iteration is error semantics for blocked traversal-style download URLs (currently blocked but may surface as `500` instead of a cleaner `4xx` in some cases).
+
+Next:
+1. Add a dedicated regression test for traversal-style download requests to lock expected response semantics.
+2. Optionally normalize blocked traversal responses to deterministic `400/404` at the framework edge.
+
+---
+
+## 2026-04-17 | Upload Safety Limits + Optional Docker Sandbox Scan + Traversal Regression
+
+Intent:
+Complete the next hardening step in one pass: enforce safer upload limits, add optional sandbox scanning, and lock traversal download behavior through automated regression testing.
+
+Action:
+Implemented upload hardening and tests together:
+
+1. Upload safety controls in backend:
+  - Added explicit upload size cap (`file.upload.max-size-bytes`, default 5 MB) with `413 Payload Too Large` response.
+  - Kept extension allowlist checks and added MIME/content-type validation (text/image + selected application types).
+  - Added quarantine staging directory (`uploads/.quarantine`) before promotion to user storage.
+
+2. Optional Docker sandbox scan pipeline:
+  - Added `FileScanService` with fail-closed scanning option.
+  - When enabled (`file.scan.enabled=true`), upload flow runs `docker run --network none --rm` with mounted staged file and `clamscan` command.
+  - Upload is rejected if scan fails, times out, or scanner command is unavailable.
+
+3. Traversal behavior regression coverage:
+  - Added integration regression test for traversal-style file download requests and locked expected response to `400/404`.
+  - Added integration tests for blocked unsafe extension upload and oversized upload rejection.
+
+4. Deployment env template update:
+  - Updated `deploy/ec2/.env.prod.example` with upload-limit and scan-related environment variables.
+
+Result:
+The file upload surface now has stronger guardrails (size, MIME, quarantine stage), and optional sandbox scanning is ready for environments that provide Docker + scanner image. Regression tests now cover traversal semantics and upload safety limits.
+
+Decision / Interpretation:
+This change significantly improves practical upload safety while keeping demo usability. The scanner is optional by default to avoid introducing runtime dependency risk on environments without Docker, but can be switched on in production-like setups.
+
+Next:
+1. Enable `FILE_SCAN_ENABLED=true` on EC2 and preload scanner image before final security demo.
+2. Add a script-level assertion that scan failure blocks upload when sandbox scan is enabled.

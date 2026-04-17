@@ -1,6 +1,7 @@
 package hk.polyu.comp4442.cloudcompute;
 
 import hk.polyu.comp4442.cloudcompute.security.CustomUserDetails;
+import hk.polyu.comp4442.cloudcompute.service.FileScanService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -31,13 +32,25 @@ public class FileController {
 
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "txt", "pdf", "png", "jpg", "jpeg", "gif", "csv", "json", "md", "zip");
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "application/pdf",
+            "application/json",
+            "application/zip",
+            "application/x-zip-compressed");
 
     private final Path fileStorageLocation;
+    private final long maxUploadSizeBytes;
+    private final FileScanService fileScanService;
 
-    public FileController(@Value("${file.upload-dir}") String uploadDir) {
+    public FileController(@Value("${file.upload-dir}") String uploadDir,
+                          @Value("${file.upload.max-size-bytes:5242880}") long maxUploadSizeBytes,
+                          FileScanService fileScanService) {
         this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.maxUploadSizeBytes = maxUploadSizeBytes;
+        this.fileScanService = fileScanService;
         try {
             Files.createDirectories(this.fileStorageLocation);
+            Files.createDirectories(resolveQuarantineDirectory());
         } catch (Exception ex) {
             throw new RuntimeException("Could not create the directory to store files.", ex);
         }
@@ -51,6 +64,11 @@ public class FileController {
                 return ResponseEntity.badRequest().body("File is empty.");
             }
 
+            if (file.getSize() > maxUploadSizeBytes) {
+                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                        .body("File exceeds max allowed size.");
+            }
+
             String safeOriginalName = sanitizeFilename(file.getOriginalFilename());
             if (!isAllowedExtension(safeOriginalName)) {
                 return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
@@ -58,6 +76,7 @@ public class FileController {
             }
 
             Path userDirectory = resolveUserDirectory(userDetails);
+            Path quarantineDirectory = resolveQuarantineDirectory();
 
             String storedName = UUID.randomUUID() + "-" + safeOriginalName;
             Path targetLocation = userDirectory.resolve(storedName).normalize();
@@ -65,12 +84,29 @@ public class FileController {
                 return ResponseEntity.badRequest().body("Invalid file path.");
             }
 
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            Path stagedFile = quarantineDirectory.resolve(storedName).normalize();
+            if (!stagedFile.startsWith(quarantineDirectory)) {
+                return ResponseEntity.badRequest().body("Invalid file path.");
+            }
+
+            Files.copy(file.getInputStream(), stagedFile, StandardCopyOption.REPLACE_EXISTING);
+
+            if (!isAllowedMimeType(stagedFile)) {
+                Files.deleteIfExists(stagedFile);
+                return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                        .body("File content type is not allowed.");
+            }
+
+            fileScanService.scanOrThrow(stagedFile);
+            Files.move(stagedFile, targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return ResponseEntity.ok("File uploaded successfully: " + storedName);
         } catch (IOException ex) {
             return ResponseEntity.badRequest().body("Could not upload file: " + ex.getMessage());
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body("File scan service unavailable.");
         } catch (IllegalArgumentException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
         }
     }
 
@@ -94,8 +130,9 @@ public class FileController {
     public ResponseEntity<Resource> downloadFile(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                  @PathVariable String filename) {
         try {
+            String safeFilename = sanitizeFilename(filename);
             Path userDirectory = resolveUserDirectory(userDetails);
-            Path filePath = userDirectory.resolve(filename).normalize();
+            Path filePath = userDirectory.resolve(safeFilename).normalize();
             if (!filePath.startsWith(userDirectory)) {
                 return ResponseEntity.badRequest().build();
             }
@@ -110,6 +147,8 @@ public class FileController {
                 return ResponseEntity.notFound().build();
             }
         } catch (MalformedURLException ex) {
+            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -127,6 +166,10 @@ public class FileController {
             throw new RuntimeException("Could not create user file directory.", ex);
         }
         return userDirectory;
+    }
+
+    private Path resolveQuarantineDirectory() {
+        return this.fileStorageLocation.resolve(".quarantine").normalize();
     }
 
     private String sanitizeFilename(String originalFilename) {
@@ -150,5 +193,22 @@ public class FileController {
 
         String ext = fileName.substring(dot + 1).toLowerCase(Locale.ROOT);
         return ALLOWED_EXTENSIONS.contains(ext);
+    }
+
+    private boolean isAllowedMimeType(Path stagedFile) {
+        try {
+            String mimeType = Files.probeContentType(stagedFile);
+            if (mimeType == null || mimeType.isBlank()) {
+                return false;
+            }
+
+            if (mimeType.startsWith("text/") || mimeType.startsWith("image/")) {
+                return true;
+            }
+
+            return ALLOWED_MIME_TYPES.contains(mimeType.toLowerCase(Locale.ROOT));
+        } catch (IOException ex) {
+            return false;
+        }
     }
 }
