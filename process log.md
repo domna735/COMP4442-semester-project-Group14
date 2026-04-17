@@ -593,3 +593,68 @@ SQLite’s persistence provides a more practical development experience than H2.
 
 **Next:**
 Ensure the system remains database-agnostic, allowing SQLite as the default while maintaining compatibility with PostgreSQL and MySQL. Proceed with cloud environment testing via EC2 deployment, focusing on file-based key loading and directory permissions.
+
+---
+
+## 2026-04-17 | JWT + SQLite Retest and Full Deploy Verification
+
+Intent:
+Execute a full retest after JWT dual-token migration and SQLite default persistence changes, then validate deployment readiness with an end-to-end verification flow.
+
+Action:
+Generated and installed ECDSA key material into `src/main/resources/cert` so JWT initialization works in test/runtime. Re-ran `mvn clean test` and diagnosed integration failures caused by legacy session-based assumptions in tests. Updated `TaskUiAndApiIntegrationTests` to use Bearer access tokens from `/api/v1/auth/login` and to validate current stateless behavior (public page serving + API protection). Expanded `scripts/smoke-test.sh` from partial coverage to full JWT flow: ping, register, login, `/auth/me`, create/list tasks, refresh token, logout, and unauthenticated access rejection. Updated `deploy/ec2/verify-deploy.sh` to align with token-based security and run full deployment checks including protected API access via JWT.
+
+Result:
+Retest and deploy verification now pass successfully.
+
+- Maven tests: 4/4 passed (`CloudComputeServiceApplicationTests` + `TaskUiAndApiIntegrationTests`)
+- Smoke test: full JWT + refresh flow passed
+- Deploy verifier: all checks passed (health, Swagger/OpenAPI, register/login, me, task create/list, refresh, logout)
+
+Decision / Interpretation:
+The system is now verifiably aligned with stateless JWT architecture and SQLite persistence. Verification tooling now matches actual security semantics (task APIs require token and return 401 when unauthenticated), reducing false negatives during demo or EC2 validation.
+
+Next:
+Run `deploy/ec2/verify-deploy.sh <ec2-base-url>` against the live EC2 endpoint after deployment and attach the pass output to final evidence artifacts.
+
+---
+
+## 2026-04-17 | Security Hardening Plan for File Upload + Database and EC2 Clarification
+
+Intent:
+Document what was completed after JWT and SQLite migration, and add a clearer technical explanation for three critical production topics: secure file upload, database strategy, and EC2 deployment operation.
+
+Action:
+Consolidated current project status and added a hardening direction for file handling. Clarified that upload functionality should not trust file name, extension, MIME type, or file content from client input alone. Defined a safer upload flow using Docker-based quarantine scanning before any file becomes downloadable:
+
+- Stage 1 (intake): receive file to non-public staging storage with randomized server-side file name and strict size limit.
+- Stage 2 (validation): enforce extension allowlist and server-side MIME/content signature checks.
+- Stage 3 (quarantine scan): run malware scan inside an isolated Docker container with no outbound network and read-only scanner image.
+- Stage 4 (promotion): only move clean files to application-accessible storage; block and log suspicious files.
+- Stage 5 (audit): record uploader, timestamp, checksum, scan result, and source IP for traceability.
+
+Expanded database explanation for team and report consistency:
+
+- Local default uses SQLite for persistence across restarts and simpler demo setup.
+- Production keeps database-agnostic path via environment-driven datasource settings for MySQL/PostgreSQL on AWS RDS.
+- Token persistence behavior (refresh token lifecycle) is now aligned with SQLite constraints by deleting old user token before inserting a new one.
+- Verification expectation: same API behavior should hold across SQLite local and RDS production profiles.
+
+Expanded EC2 explanation for operational readiness:
+
+- Use systemd service for auto-restart and reboot resilience.
+- Keep secrets and datasource values in environment file, not hardcoded in code.
+- Restrict security groups to minimum required ports (SSH and app/API), and allow DB only from EC2 security group.
+- Run deployment verification after startup using `deploy/ec2/verify-deploy.sh` and keep output as evidence.
+- Ensure JWT key files and upload directories have correct ownership and least-privilege permissions before service start.
+
+Result:
+The process log now captures both completed retest work and a concrete security-hardening direction for file upload defense. Database and EC2 sections are now clearer for final report writing, demo Q&A, and production-style explanation.
+
+Decision / Interpretation:
+Adding Docker-based quarantine for uploads is necessary defense-in-depth against web attack vectors (malicious scripts, polyglot files, and disguised binaries). Clear environment separation (SQLite local, RDS production) and stricter EC2 operations reduce deployment risk and improve reproducibility.
+
+Next:
+1. Implement upload quarantine pipeline with Docker scanner integration and fail-closed behavior.
+2. Add automated tests for upload allowlist, blocked file types, and quarantine outcomes.
+3. Execute live EC2 verification and attach logs/screenshots as final evidence artifacts.

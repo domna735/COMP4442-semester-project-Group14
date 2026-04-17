@@ -10,7 +10,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +21,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -64,13 +62,16 @@ class TaskUiAndApiIntegrationTests {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/task.html").accept(MediaType.TEXT_HTML))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login.html"));
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("function ensureAuth")));
+
+        mockMvc.perform(get("/api/v1/tasks"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void shouldRegisterLoginAndCreateReadUpdateDeleteOwnTask() throws Exception {
-        MockHttpSession session = registerAndLogin("demo_user", "demo_user@example.com", "password123");
+                String accessToken = registerAndLogin("demo_user", "demo_user@example.com", "password123");
 
         Map<String, Object> createPayload = new HashMap<>();
         createPayload.put("title", "Prepare demo script");
@@ -78,7 +79,7 @@ class TaskUiAndApiIntegrationTests {
         createPayload.put("status", "TODO");
 
         String created = mockMvc.perform(post("/api/v1/tasks")
-                        .session(session)
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPayload)))
                 .andExpect(status().isCreated())
@@ -91,7 +92,8 @@ class TaskUiAndApiIntegrationTests {
 
         Long id = objectMapper.readTree(created).get("id").asLong();
 
-        mockMvc.perform(get("/api/v1/tasks").session(session))
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(id))
                 .andExpect(jsonPath("$[0].status").value("TODO"))
@@ -103,24 +105,26 @@ class TaskUiAndApiIntegrationTests {
         updatePayload.put("status", "IN_PROGRESS");
 
         mockMvc.perform(put("/api/v1/tasks/{id}", id)
-                        .session(session)
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePayload)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Prepare demo script v2"))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-        mockMvc.perform(delete("/api/v1/tasks/{id}", id).session(session))
+        mockMvc.perform(delete("/api/v1/tasks/{id}", id)
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/tasks/{id}", id).session(session))
+        mockMvc.perform(get("/api/v1/tasks/{id}", id)
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TASK_NOT_FOUND"));
     }
 
     @Test
     void shouldRejectInvalidTaskCreationForAuthenticatedUser() throws Exception {
-        MockHttpSession session = registerAndLogin("validation_user", "validation_user@example.com", "password123");
+                String accessToken = registerAndLogin("validation_user", "validation_user@example.com", "password123");
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", "");
@@ -128,14 +132,14 @@ class TaskUiAndApiIntegrationTests {
         payload.put("status", "TODO");
 
         mockMvc.perform(post("/api/v1/tasks")
-                        .session(session)
+                                                .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
-    private MockHttpSession registerAndLogin(String username, String email, String password) throws Exception {
+        private String registerAndLogin(String username, String email, String password) throws Exception {
         Map<String, Object> registerPayload = new HashMap<>();
         registerPayload.put("username", username);
         registerPayload.put("email", email);
@@ -151,13 +155,15 @@ class TaskUiAndApiIntegrationTests {
         loginPayload.put("username", username);
         loginPayload.put("password", password);
 
-        return (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginPayload)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.username").value(username))
                 .andReturn()
-                .getRequest()
-                .getSession(false);
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(loginResponse).get("accessToken").asText();
     }
 }
