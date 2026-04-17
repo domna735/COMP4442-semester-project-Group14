@@ -52,6 +52,25 @@ Continue adding one log entry per meaningful development session (coding, testin
 
 ---
 
+## 2026-04-18 | EC2 Pre-Demo One-Click Automation for Live Presentation
+
+Intent:
+Reduce live-demo setup risk and startup time by converting the EC2 pre-demo command pack into a one-click executable flow.
+
+Action:
+Created `scripts/ec2-pre-demo-one-click.sh` to automate EC2 pre-demo warm-up: optional instance auto-start (AWS CLI), SSH readiness wait, remote build/start, cloud health checks (`LOCAL_PING` and `PUBLIC_PING`), optional deploy verifier run, and optional localhost SSH tunnel fallback. Updated `realtime_demo_playbook.md` to keep full manual commands while adding one-click usage for time-limited presentation scenarios.
+
+Result:
+The demo runbook now supports both transparency (manual command pack) and speed (single-script execution). This improves presentation reliability when EC2 is normally stopped for cost control and needs quick reactivation before class.
+
+Decision / Interpretation:
+Maintaining both manual and automated paths is the safest approach: the one-click script handles normal flow rapidly, while manual steps remain available for troubleshooting and grading explainability.
+
+Next:
+Use `./scripts/ec2-pre-demo-one-click.sh --run-verify` before each demo rehearsal, and use `--open-tunnel` only when public network access is restricted.
+
+---
+
 ## 2026-03-24 | Base Setting Completion
 
 Intent:

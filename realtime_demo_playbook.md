@@ -2,6 +2,8 @@
 
 **Purpose:** Step-by-step guide for executing a live 12-minute demonstration of the Cloud Compute Service during presentation.
 
+**Default Demo Mode:** Cloud EC2 first. Use localhost only when classroom network/public ingress is unavailable.
+
 **Important Update (2026-04-17):**
 - Authentication is now JWT access + refresh token, not server session cookie.
 - Protected API calls use `Authorization: Bearer <accessToken>`.
@@ -121,30 +123,147 @@ This still runs the backend on EC2, but traffic is tunneled through SSH.
 
 ---
 
+## EC2 Pre-Demo Command Pack (Copy to Terminal)
+
+Use this section when you shut down EC2 to save cost and need a fast warm-up before demo.
+
+### Fastest one-click mode (recommended for time limit)
+
+```bash
+chmod +x ./scripts/ec2-pre-demo-one-click.sh
+./scripts/ec2-pre-demo-one-click.sh --run-verify
+```
+
+If EC2 was stopped and you already configured AWS CLI locally, use:
+
+```bash
+./scripts/ec2-pre-demo-one-click.sh --auto-start --run-verify
+```
+
+If public network fails and you need localhost fallback tunnel:
+
+```bash
+./scripts/ec2-pre-demo-one-click.sh --open-tunnel
+```
+
+One-click script location:
+- `scripts/ec2-pre-demo-one-click.sh`
+
+Detailed manual command pack is kept below for transparency and troubleshooting.
+
+### 1) Set local variables once
+
+```bash
+KEY="/home/domna/COMP4442 Semester Project Group 14.pem"
+HOST="ubuntu@3.107.95.44"
+BASE_URL="http://3.107.95.44:8080"
+```
+
+### 2) If EC2 was stopped, start it first
+
+Preferred: start from AWS Console (EC2 -> Instance -> Start).
+
+Optional (only if AWS CLI is configured on your machine):
+
+```bash
+aws ec2 start-instances --instance-ids i-0f2d54704d5c42a6a --region ap-southeast-2
+```
+
+### 3) Wait until SSH is reachable
+
+```bash
+for i in {1..30}; do
+   if ssh -i "$KEY" -o ConnectTimeout=5 -o StrictHostKeyChecking=no "$HOST" "echo SSH_OK" >/dev/null 2>&1; then
+      echo "SSH reachable"
+      break
+   fi
+   echo "Waiting for EC2 SSH..."
+   sleep 10
+done
+```
+
+### 4) Build and start app on EC2 (cloud mode)
+
+```bash
+ssh -i "$KEY" -o StrictHostKeyChecking=no "$HOST" "cd ~/COMP4442-semester-project-Group14 && mvn -q -DskipTests clean package"
+ssh -i "$KEY" -o StrictHostKeyChecking=no "$HOST" "pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd ~/COMP4442-semester-project-Group14 && nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &"
+```
+
+### 5) Health checks (must pass before demo)
+
+```bash
+ssh -i "$KEY" -o StrictHostKeyChecking=no "$HOST" "curl -s -o /dev/null -w 'LOCAL_PING=%{http_code}\n' http://localhost:8080/api/v1/compute/ping"
+curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" "$BASE_URL/api/v1/compute/ping"
+```
+
+Expected:
+- LOCAL_PING=200
+- PUBLIC_PING=200
+
+### 6) Optional end-to-end verify (recommended)
+
+```bash
+./deploy/ec2/verify-deploy.sh "$BASE_URL"
+```
+
+### 7) If public network path fails, fallback to localhost tunnel
+
+```bash
+ssh -i "$KEY" -L 8080:localhost:8080 "$HOST"
+```
+
+Then demo via:
+- http://localhost:8080
+- http://localhost:8080/login.html
+- http://localhost:8080/task.html
+- http://localhost:8080/swagger-ui/index.html
+
+---
+
 ## Pre-Demo Checklist (DO THIS BEFORE PRESENTATION)
 
-- [ ] **Start Application**
+- [ ] **Use Cloud EC2 as primary demo target**
+
+- [ ] **Start/Resume EC2 instance if it was stopped**
+   - AWS Console -> EC2 -> Start instance `i-0f2d54704d5c42a6a`
+   - Wait until instance state is `running` and status checks are `2/2 passed`
+
+- [ ] **Run EC2 Pre-Demo Command Pack**
+   - Quick path: `./scripts/ec2-pre-demo-one-click.sh --run-verify`
+   - Confirm `LOCAL_PING=200` and `PUBLIC_PING=200`
+
+- [ ] **Confirm public demo pages are reachable**
+   - Home: `http://3.107.95.44:8080`
+   - Login: `http://3.107.95.44:8080/login.html`
+   - Task: `http://3.107.95.44:8080/task.html`
+   - Swagger: `http://3.107.95.44:8080/swagger-ui/index.html`
+
+- [ ] **Fallback only if network/public ingress fails**
+   - Use SSH tunnel (`-L 8080:localhost:8080`) and demo via localhost
+
+- [ ] **(Fallback local-only mode, last resort)**
   ```bash
-  cd /home/domna/COMP4442-semester-project-Group14
+   cd /home/domna/COMP4442-semester-project-Group14-v2
   mvn spring-boot:run
   # Or: java -jar target/cloud-compute-service-0.0.1-SNAPSHOT.jar
   ```
   Wait for message: "Started CloudComputeServiceApplication in X.XXX seconds"
 
-- [ ] **Verify Application is Running**
-  - Open browser: http://localhost:8080
-  - Expected: Home page with "Cloud Compute Service" and navigation links
-   - Open Swagger API docs: http://localhost:8080/swagger-ui/index.html
-  - Expected: All endpoints visible
+- [ ] **Verify Application is Running (Cloud-first)**
+   - Open browser: `http://3.107.95.44:8080`
+   - Expected: Home page with "Cloud Compute Service" and navigation links
+   - Open Swagger API docs: `http://3.107.95.44:8080/swagger-ui/index.html`
+   - Expected: All endpoints visible
 
 - [ ] **Clear Browser Local Storage + Cookies (Important!)**
    - Press `Ctrl+Shift+Delete` (or Cmd+Shift+Delete on Mac)
-   - Delete site data for localhost (cookies + local storage)
+   - Delete site data for `3.107.95.44:8080` (cookies + local storage)
+   - If using tunnel fallback, also clear site data for `localhost:8080`
    - This ensures demo starts with unauthenticated state
 
-- [ ] **Have Browser Windows Ready**
-  - **Tab 1:** http://localhost:8080 (home page)
-  - **Tab 2:** http://localhost:8080/swagger-ui.html (API reference)
+- [ ] **Have Browser Windows Ready (Cloud mode)**
+   - **Tab 1:** http://3.107.95.44:8080 (home page)
+   - **Tab 2:** http://3.107.95.44:8080/swagger-ui/index.html (API reference)
   - **Tab 3:** Postman or curl for API testing (optional backup)
 
 - [ ] **Have Terminal Ready**
@@ -201,13 +320,13 @@ This still runs the backend on EC2, but traffic is tunneled through SSH.
      - Username: `alice`
      - Password: `AlicePass123!`
    - Click "Login"
-   - Page redirects to http://localhost:8080/task.html
+   - Page redirects to `http://3.107.95.44:8080/task.html` (or localhost in fallback mode)
    - Show "Signed in as alice" message at top of page
    - **Speaking:** "Upon login, AuthService calls Spring's AuthenticationManager to verify credentials against the database. If valid, a SecurityContext is created and stored in the HTTP session."
 
 2. **Show Token Storage** (1:00 - 1:30)
    - Open Browser Dev Tools (F12)
-   - Go to Application → Local Storage → localhost:8080
+   - Go to Application → Local Storage → `3.107.95.44:8080` (or `localhost:8080` in fallback mode)
    - Show `accessToken` and `refreshToken`
    - **Speaking:** "The access token secures API calls. If it expires, refresh endpoint issues a new one without full re-login."
 
@@ -335,7 +454,7 @@ This still runs the backend on EC2, but traffic is tunneled through SSH.
 **Action Steps:**
 
 1. **Show Swagger Documentation** (0:00 - 0:45)
-   - Open Swagger UI: http://localhost:8080/swagger-ui.html
+   - Open Swagger UI: `http://3.107.95.44:8080/swagger-ui/index.html`
    - Expand "Authentication Endpoints" section
    - Show all endpoints: /auth/register, /auth/login, /auth/me, /auth/logout
    - Expand "Task Endpoints"
@@ -345,7 +464,7 @@ This still runs the backend on EC2, but traffic is tunneled through SSH.
 2. **Optional: Run Postman** (0:45 - 1:00)
    - (Only if time permits) Show sample curl command for login:
      ```bash
-     curl -X POST http://localhost:8080/api/v1/auth/login \
+       curl -X POST http://3.107.95.44:8080/api/v1/auth/login \
        -H "Content-Type: application/json" \
        -d '{"username": "bob", "password": "BobPass456!"}'
      ```
@@ -420,7 +539,7 @@ If first command returns `200` and login API returns token JSON, backend is work
    - with token: `200`
 
 ### Issue: Application is slow to start
-**Solution:** Start application **30 seconds before demo begins**. Show Swagger docs while loading.
+**Solution:** Start EC2 app 2-5 minutes before demo begins (build + boot). Keep `tail -n 60 ~/cloud-compute-prod.log` ready on SSH tab.
 
 ### Issue: Accidentally logged out
 **Solution:** Press back button or type URL directly to login page. Re-login quickly.
@@ -429,9 +548,9 @@ If first command returns `200` and login API returns token JSON, backend is work
 **Solution:** Use API calls in Swagger (`GET /api/v1/tasks`) after login to inspect current user task list.
 
 ### Issue: Browser shows "Connection refused"
-**Solution:** Open terminal and check if app is still running. If needed, restart:
+**Solution:** Open terminal and check EC2 process and logs. If needed, restart on EC2:
 ```bash
-mvn spring-boot:run
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@3.107.95.44 "pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd ~/COMP4442-semester-project-Group14 && nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &"
 ```
 
 ### Issue: Cannot login (invalid credentials)
@@ -443,11 +562,12 @@ mvn spring-boot:run
 
 | Component | URL |
 |-----------|-----|
-| Home Page | http://localhost:8080 |
-| Register Page | http://localhost:8080/register.html |
-| Login Page | http://localhost:8080/login.html |
-| Task Page | http://localhost:8080/task.html |
-| Swagger Docs | http://localhost:8080/swagger-ui/index.html |
+| Home Page (Cloud Primary) | http://3.107.95.44:8080 |
+| Register Page (Cloud Primary) | http://3.107.95.44:8080/register.html |
+| Login Page (Cloud Primary) | http://3.107.95.44:8080/login.html |
+| Task Page (Cloud Primary) | http://3.107.95.44:8080/task.html |
+| Swagger Docs (Cloud Primary) | http://3.107.95.44:8080/swagger-ui/index.html |
+| Localhost Fallback (Tunnel) | http://localhost:8080 |
 
 ---
 
