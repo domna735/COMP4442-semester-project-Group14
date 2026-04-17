@@ -363,17 +363,23 @@
 
 
     async function ensureAuth() {
-    try {
+      try {
         const res = await authFetch("/api/v1/auth/me");
-
-        if (res.ok) {
-            const user = await res.json();
-            if (userLabel) userLabel.textContent = `Signed in as ${user.username}`;
+        if (!res || !res.ok) {
+          localStorage.clear();
+          window.location.replace("/login.html");
+          return false;
         }
-    } catch (err) {
+        const user = await res.json();
+        if (userLabel) userLabel.textContent = `Signed in as ${user.username}`;
+        return true;
+      } catch (err) {
         console.error("Auth check failed", err);
+        localStorage.clear();
+        window.location.replace("/login.html");
+        return false;
+      }
     }
-}
 
     async function loadTasks() {
       const res = await authFetch(apiBase, );
@@ -545,18 +551,71 @@
     </div>
 </div>
 <script>
-    window.onload = function(){loadFileList();};
+    window.addEventListener("load", () => {
+      loadFileList();
+    });
+
+    async function downloadFileWithAuth(fileName) {
+        try {
+          const res = await authFetch("/api/v1/files/download/" + encodeURIComponent(fileName));
+          if (!res.ok) {
+            throw new Error(`Download failed (HTTP ${res.status})`);
+          }
+
+          const blob = await res.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        } catch (err) {
+          const m = document.getElementById('uploadMessage');
+          m.textContent = "Failed: " + err.message;
+          m.style.color = "red";
+        }
+    }
+
     function uploadFile(){
         const f=document.getElementById('fileInput'),m=document.getElementById('uploadMessage');
         if(!f.files[0]){m.textContent="Select a file!";m.style.color="red";return;}
         let d=new FormData();d.append("file",f.files[0]);
-        fetch("/api/v1/files/upload",{method:"POST",body:d}).then(r=>r.text()).then(t=>{m.textContent=t;m.style.color="green";f.value="";loadFileList();}).catch(e=>{m.textContent="Failed: "+e;m.style.color="red";});
+        authFetch("/api/v1/files/upload",{method:"POST",body:d,headers:{}})
+          .then(async (r)=>{
+            const t = await r.text();
+            if (!r.ok) {
+              throw new Error(t || `HTTP ${r.status}`);
+            }
+            m.textContent=t;
+            m.style.color="green";
+            f.value="";
+            loadFileList();
+          })
+          .catch(e=>{m.textContent="Failed: "+e.message;m.style.color="red";});
     }
     function loadFileList(){
         let l=document.getElementById('fileList');l.innerHTML="";
-        fetch("/api/v1/files/list").then(r=>r.json()).then(fs=>{
+        authFetch("/api/v1/files/list").then(async r=>{
+            if (!r.ok) {
+              throw new Error(`HTTP ${r.status}`);
+            }
+            return r.json();
+        }).then(fs=>{
             if(fs.length===0){l.innerHTML="<li>No files</li>";return;}
-            fs.forEach(n=>{let li=document.createElement('li');let a=document.createElement('a');a.href="/api/v1/files/download/"+n;a.textContent=n;a.target="_blank";li.appendChild(a);l.appendChild(li);});
+            fs.forEach(n=>{
+              let li=document.createElement('li');
+              let a=document.createElement('a');
+              a.href="#";
+              a.textContent=n;
+              a.addEventListener('click', (e) => {
+                e.preventDefault();
+                downloadFileWithAuth(n);
+              });
+              li.appendChild(a);
+              l.appendChild(li);
+            });
         }).catch(e=>{l.innerHTML="<li>Error</li>";});
     }
 </script>

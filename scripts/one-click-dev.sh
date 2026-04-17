@@ -46,20 +46,28 @@ require_cmd() {
 # Now 
 prepare_env() {
   echo "Checking security keys..."
-  # Create the cert directory if it doesn't exist in src/main/resources
-  mkdir -p "$ROOT_DIR/src/main/resources/cert"
+  local cert_dir="$ROOT_DIR/src/main/resources/cert"
+  local key_dir="$ROOT_DIR/deploy/keys"
+  local src_private="$key_dir/ECDSA_384_private.pem"
+  local src_public="$key_dir/ECDSA_384_public.pem"
+  local dst_private="$cert_dir/ECDSA_384_private.pem"
+  local dst_public="$cert_dir/ECDSA_384_public.pem"
 
-  # If keys don't exist in resources, try to copy them from the deploy folder
-  if [[ ! -f "$ROOT_DIR/src/main/resources/cert/ECDSA_384_private.pem" ]]; then
-    if [[ -f "$ROOT_DIR/deploy/keys/ECDSA_384_private.pem" ]]; then
-      echo "Copying keys from deploy/keys to resources/cert..."
-      cp "$ROOT_DIR/deploy/keys/ECDSA_384_*.pem" "$ROOT_DIR/src/main/resources/cert/"
-    else
-      echo "[WARN] Keys not found. Generating new ones..."
-      chmod +x "$ROOT_DIR/deploy/keys/key.sh"
-      (cd "$ROOT_DIR/deploy/keys" && ./key.sh)
-      cp "$ROOT_DIR/deploy/keys/ECDSA_384_*.pem" "$ROOT_DIR/src/main/resources/cert/"
-    fi
+  # Create the cert directory if it doesn't exist in src/main/resources
+  mkdir -p "$cert_dir"
+
+  # Ensure source key pair exists in deploy/keys; generate if missing.
+  if [[ ! -f "$src_private" || ! -f "$src_public" ]]; then
+    echo "[WARN] Key pair missing in deploy/keys. Generating new keys..."
+    chmod +x "$ROOT_DIR/deploy/keys/key.sh"
+    (cd "$ROOT_DIR/deploy/keys" && ./key.sh)
+  fi
+
+  # Ensure runtime key pair exists in resources/cert.
+  if [[ ! -f "$dst_private" || ! -f "$dst_public" ]]; then
+    echo "Copying keys from deploy/keys to src/main/resources/cert..."
+    cp "$src_private" "$dst_private"
+    cp "$src_public" "$dst_public"
   fi
 
   #Clear the SQLite DB for a smoke test

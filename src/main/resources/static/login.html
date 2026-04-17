@@ -89,6 +89,7 @@
       <button type="submit">Sign In</button>
     </form>
     <div id="status" class="status"></div>
+    <p id="redirect-help" style="display:none;"><a href="/task.html">Continue to Task Page</a></p>
     <p><a href="/register.html">No account yet? Register</a></p>
     <p><a href="/index.html">Back to Home</a></p>
   </main>
@@ -96,6 +97,31 @@
   <script>
     const form = document.getElementById("login-form");
     const statusEl = document.getElementById("status");
+    const redirectHelpEl = document.getElementById("redirect-help");
+
+    function persistAuth(data) {
+      // Try localStorage first; fall back to sessionStorage when browser policy blocks local storage.
+      const stores = [window.localStorage, window.sessionStorage];
+      for (const store of stores) {
+        try {
+          if (data.accessToken) {
+            store.setItem("accessToken", data.accessToken);
+          }
+          if (data.refreshToken) {
+            store.setItem("refreshToken", data.refreshToken);
+          }
+          if (data.user && data.user.username) {
+            store.setItem("username", data.user.username);
+            store.setItem("role", data.user.role || "USER");
+            store.setItem("userId", String(data.user.id || ""));
+          }
+          return true;
+        } catch {
+          // Keep trying next storage.
+        }
+      }
+      return false;
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -113,7 +139,13 @@
           body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
+        let data = {};
+        const raw = await res.text();
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch {
+          data = { message: "Unexpected response format" };
+        }
 
         if (!res.ok) {
           // display error message 
@@ -121,29 +153,26 @@
           statusEl.textContent = "Login failed: " + (data.message || "Invalid credentials");
           return;
         }
-
-
-        if (data.accessToken) {
-          localStorage.setItem("accessToken", data.accessToken);
-
-        }
-        if (data.refreshToken) {
-          localStorage.setItem("refreshToken", data.refreshToken);
-
-        }
-        if (data.user && data.user.username) {
-          localStorage.setItem("username", data.user.username);
-          localStorage.setItem("role", data.user.role);
-          localStorage.setItem("userId", data.user.id);
+        const stored = persistAuth(data);
+        if (!stored) {
+          statusEl.className = "status err";
+          statusEl.textContent = "Login succeeded, but browser storage is blocked. Please disable private mode and retry.";
+          return;
         }
 
         statusEl.className = "status ok";
-        statusEl.textContent = "Login successful. Redirecting...";
+        statusEl.textContent = "Login successful. Redirecting to task page...";
+        redirectHelpEl.style.display = "block";
 
+        // Use replace to prevent browser back-navigation returning to stale login state.
+        window.location.replace("/task.html");
 
+        // Fallback retry if navigation is delayed.
         setTimeout(() => {
-          window.location.href = "/task.html";
-        }, 600);
+          if (window.location.pathname !== "/task.html") {
+            window.location.replace("/task.html");
+          }
+        }, 1200);
 
       } catch (err) {
         statusEl.className = "status err";

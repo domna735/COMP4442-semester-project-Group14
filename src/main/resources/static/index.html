@@ -84,17 +84,18 @@
 <body>
   <main class="card">
     <h1>Cloud Compute Task Manager</h1>
-    <p>Home page for Task 3 UI. Register a user account, login, and manage your own tasks securely.</p>
-    <div class="row">
+    <p id="home-subtitle">Home page for Task 3 UI. Register a user account, login, and manage your own tasks securely.</p>
+    <div class="row" id="home-actions">
       <a class="link-btn primary" href="/login.html">Login</a>
       <a class="link-btn" href="/register.html">Register</a>
       <a class="link-btn" href="javascript:void(0)" onclick="goToTasks()">Task Page</a>
     </div>
-    <div class="muted">Flow: Home -> Login/Register -> Task Page -> Edit Page</div>
+    <div class="muted" id="home-flow">Flow: Home -> Login/Register -> Task Page -> Edit Page</div>
+    <div class="muted" id="auth-status"></div>
   </main>
   <hr style="margin: 30px 0;">
 
-  <div style="max-width: 800px; margin: 0 auto; padding: 0 20px;">
+  <div id="file-section" style="max-width: 800px; margin: 0 auto; padding: 0 20px; display:none;">
     <h2>File Upload / Download</h2>
 
     <div style="margin: 20px 0; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
@@ -117,9 +118,17 @@
   </div>
 
   <script>
-    // prevent user view task page withouf access token
+    function getToken() {
+      return localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    }
+
+    function clearAuthStorage() {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+
     function goToTasks() {
-      const token = localStorage.getItem("accessToken");
+      const token = getToken();
 
       if (!token || token === "null") {
         alert("Please login first to access the Task Manager.");
@@ -128,8 +137,75 @@
         window.location.href = "/task.html";
       }
     }
-    window.onload = function () {
+
+    async function checkCurrentUser() {
+      const token = getToken();
+      if (!token) {
+        return null;
+      }
+      try {
+        const res = await fetch('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          return null;
+        }
+        return await res.json();
+      } catch {
+        return null;
+      }
+    }
+
+    function renderGuestHome() {
+      document.getElementById('home-subtitle').textContent =
+        'Home page for Task 3 UI. Register a user account, login, and manage your own tasks securely.';
+      document.getElementById('home-actions').innerHTML = `
+        <a class="link-btn primary" href="/login.html">Login</a>
+        <a class="link-btn" href="/register.html">Register</a>
+        <a class="link-btn" href="javascript:void(0)" onclick="goToTasks()">Task Page</a>
+      `;
+      document.getElementById('home-flow').textContent = 'Flow: Home -> Login/Register -> Task Page -> Edit Page';
+      document.getElementById('auth-status').textContent = 'Current status: Guest';
+      document.getElementById('file-section').style.display = 'none';
+    }
+
+    function renderLoggedInHome(user) {
+      document.getElementById('home-subtitle').textContent =
+        `Welcome back, ${user.username}. You are signed in and can continue your tasks.`;
+      document.getElementById('home-actions').innerHTML = `
+        <a class="link-btn primary" href="/task.html">Go To Task Page</a>
+        <button class="link-btn" type="button" onclick="logoutFromHome()">Logout</button>
+      `;
+      document.getElementById('home-flow').textContent = 'Logged in flow: Home -> Task Page -> Edit Page';
+      document.getElementById('auth-status').textContent = `Current status: Logged in as ${user.username}`;
+      document.getElementById('file-section').style.display = 'block';
       loadFileList();
+    }
+
+    async function logoutFromHome() {
+      const token = getToken();
+      if (token) {
+        try {
+          await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch {
+          // Ignore logout API errors; local logout should still proceed.
+        }
+      }
+      clearAuthStorage();
+      window.location.replace('/index.html');
+    }
+
+    window.onload = async function () {
+      const user = await checkCurrentUser();
+      if (!user) {
+        clearAuthStorage();
+        renderGuestHome();
+        return;
+      }
+      renderLoggedInHome(user);
     };
 
     function uploadFile() {
@@ -145,12 +221,23 @@
       const formData = new FormData();
       formData.append("file", fileInput.files[0]);
 
+      const token = getToken();
+      if (!token) {
+        messageBox.textContent = "Please login first.";
+        messageBox.style.color = "red";
+        return;
+      }
+
       fetch('/api/v1/files/upload', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
         body: formData
       })
-        .then(response => response.text())
-        .then(data => {
+        .then(async response => {
+          const data = await response.text();
+          if (!response.ok) {
+            throw new Error(data || `HTTP ${response.status}`);
+          }
           messageBox.textContent = data;
           messageBox.style.color = "green";
           fileInput.value = "";
@@ -162,12 +249,55 @@
         });
     }
 
+    async function downloadFileWithAuth(fileName) {
+      const token = getToken();
+      if (!token) {
+        alert("Please login first.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/v1/files/download/${encodeURIComponent(fileName)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        alert("Download failed: " + error.message);
+      }
+    }
+
     function loadFileList() {
       const fileListElement = document.getElementById('fileList');
       fileListElement.innerHTML = "";
 
-      fetch('/api/v1/files/list')
-        .then(response => response.json())
+      const token = getToken();
+      if (!token) {
+        fileListElement.innerHTML = "<li>Please login to view files.</li>";
+        return;
+      }
+
+      fetch('/api/v1/files/list', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(async response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
         .then(fileNameList => {
           if (fileNameList.length === 0) {
             fileListElement.innerHTML = "<li>No files uploaded yet. Upload your first file!</li>";
@@ -177,10 +307,13 @@
           fileNameList.forEach(fileName => {
             const liTag = document.createElement('li');
             const aTag = document.createElement('a');
-            aTag.href = `/api/v1/files/download/${fileName}`;
+            aTag.href = '#';
             aTag.textContent = fileName;
             aTag.style.color = "#007bff";
-            aTag.target = "_blank";
+            aTag.addEventListener('click', (e) => {
+              e.preventDefault();
+              downloadFileWithAuth(fileName);
+            });
             liTag.appendChild(aTag);
             fileListElement.appendChild(liTag);
           });

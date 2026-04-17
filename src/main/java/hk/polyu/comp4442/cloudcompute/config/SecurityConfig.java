@@ -42,6 +42,8 @@ public class SecurityConfig {
                                 "/home.html",
                                 "/login.html",
                                 "/register.html",
+                                "/task.html",
+                                "/edit.html",
                                 "/js/**",
                                 "/api/v1/auth/refresh", // add refresh end point
                                 "/api/v1/auth/register",
@@ -50,7 +52,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
                         .permitAll()
-                    .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/files/**", "/api/v1/auth/me",
+                    .requestMatchers("/api/v1/tasks/**", "/api/v1/files/**", "/api/v1/auth/me",
                         "/api/v1/auth/logout")
                         .authenticated()
                     .anyRequest().authenticated())
