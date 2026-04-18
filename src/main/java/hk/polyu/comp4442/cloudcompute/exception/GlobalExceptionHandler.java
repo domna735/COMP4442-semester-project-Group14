@@ -16,18 +16,35 @@ import java.util.Locale;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Task Not Found
     @ExceptionHandler(TaskNotFoundException.class)
     public ResponseEntity<ApiError> handleTaskNotFound(TaskNotFoundException ex) {
         ApiError error = new ApiError("TASK_NOT_FOUND", ex.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
+    // Duplicate Username
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleUsernameExists(UsernameAlreadyExistsException ex) {
+        ApiError error = new ApiError("USERNAME_EXISTS", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // Duplicate Email
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleEmailExists(EmailAlreadyExistsException ex) {
+        ApiError error = new ApiError("EMAIL_EXISTS", ex.getMessage(), LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // Invalid Argument
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
         ApiError error = new ApiError("BAD_REQUEST", ex.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // Validation Error
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
         List<String> messages = ex.getBindingResult()
@@ -41,18 +58,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // Auth Failed
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex) {
         ApiError error = new ApiError("AUTHENTICATION_FAILED", ex.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
+    // Request Rejected
     @ExceptionHandler(RequestRejectedException.class)
     public ResponseEntity<ApiError> handleRequestRejected(RequestRejectedException ex) {
         ApiError error = new ApiError("BAD_REQUEST", "Invalid request.", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
+    // Unknown Error
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnknown(Exception ex) {
         if (isRejectedRequest(ex)) {
@@ -83,7 +103,6 @@ public class GlobalExceptionHandler {
 
             current = current.getCause();
         }
-
         return false;
     }
 }
