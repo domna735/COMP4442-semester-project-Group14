@@ -124,6 +124,11 @@ if [[ "$STRICT_HOST_KEY" == false ]]; then
   SSH_COMMON+=(-o StrictHostKeyChecking=no)
 fi
 
+print_remote_diagnostics() {
+  echo "[INFO] Collecting remote diagnostics from $HOST"
+  ssh "${SSH_COMMON[@]}" "$HOST" "echo '--- ps java ---'; ps -ef | grep -E 'cloud-compute-service|java -jar' | grep -v grep || true; echo '--- port 8080 ---'; ss -ltnp | grep ':8080' || true; echo '--- log tail ---'; tail -n 120 ~/cloud-compute-prod.log || true" || true
+}
+
 resolve_current_endpoint() {
   if ! command -v aws >/dev/null 2>&1; then
     echo "[ERROR] AWS CLI not found but --resolve-from-aws was provided." >&2
@@ -202,7 +207,29 @@ echo "[INFO] Building artifact on EC2"
 ssh "${SSH_COMMON[@]}" "$HOST" "cd $REMOTE_REPO && mvn -q -DskipTests clean package"
 
 echo "[INFO] Restarting app on EC2"
-ssh "${SSH_COMMON[@]}" "$HOST" "pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd $REMOTE_REPO && nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &"
+restart_out=$(ssh -n "${SSH_COMMON[@]}" "$HOST" "bash -lc 'pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd $REMOTE_REPO && nohup ./deploy/ec2/run-prod.sh </dev/null > ~/cloud-compute-prod.log 2>&1 & disown || true; echo APP_LAUNCH_SENT'" || true)
+if [[ "$restart_out" != *"APP_LAUNCH_SENT"* ]]; then
+  echo "[ERROR] Failed to send remote app launch command over SSH." >&2
+  print_remote_diagnostics
+  exit 1
+fi
+
+echo "[INFO] Verifying process launch"
+app_pid=""
+for _ in {1..20}; do
+  app_pid=$(ssh "${SSH_COMMON[@]}" "$HOST" "pgrep -f cloud-compute-service-0.0.1-SNAPSHOT.jar | head -n 1" || true)
+  if [[ -n "$app_pid" ]]; then
+    echo "[PASS] App process detected (PID=$app_pid)"
+    break
+  fi
+  sleep 2
+done
+
+if [[ -z "$app_pid" ]]; then
+  echo "[ERROR] App process did not stay alive after restart." >&2
+  print_remote_diagnostics
+  exit 1
+fi
 
 echo "[INFO] Waiting for app readiness"
 for _ in {1..30}; do
@@ -213,6 +240,13 @@ for _ in {1..30}; do
     echo "[PASS] Cloud pre-demo health checks passed"
     break
   fi
+
+  if ! ssh "${SSH_COMMON[@]}" "$HOST" "pgrep -f cloud-compute-service-0.0.1-SNAPSHOT.jar >/dev/null"; then
+    echo "[ERROR] App process exited during readiness checks." >&2
+    print_remote_diagnostics
+    exit 1
+  fi
+
   sleep 5
 done
 
@@ -224,7 +258,8 @@ echo "PUBLIC_PING=$public_ping"
 
 if [[ "$local_ping" != "200" ]]; then
   echo "[ERROR] LOCAL_PING is not 200. Check remote log:" >&2
-  echo "ssh -i \"$KEY_PATH\" $HOST \"tail -n 80 ~/cloud-compute-prod.log\"" >&2
+  print_remote_diagnostics
+  echo "ssh -i \"$KEY_PATH\" $HOST \"tail -n 120 ~/cloud-compute-prod.log\"" >&2
   exit 1
 fi
 
