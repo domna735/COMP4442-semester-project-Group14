@@ -31,7 +31,7 @@
 Use this section when presenting on your real AWS instance instead of localhost.
 
 ### A. Current EC2 target
-- Current example (2026-04-25): Public IP 13.236.152.79
+- Current example (2026-04-25): Elastic IP 54.253.135.61
 
 - Instance Name: COMP4442 Semester Project Group 14
 - Instance ID: i-0f2d54704d5c42a6a
@@ -66,8 +66,8 @@ After demo, remove or narrow this rule.
 Run from your local machine:
 
 ```bash
-ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@YOUR_EC2_PUBLIC_IP "curl -s -o /dev/null -w 'LOCAL_PING=%{http_code}' http://localhost:8080/api/v1/compute/ping"
-curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://YOUR_EC2_PUBLIC_IP:8080/api/v1/compute/ping
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@54.253.135.61 "curl -s -o /dev/null -w 'LOCAL_PING=%{http_code}' http://localhost:8080/api/v1/compute/ping"
+curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://54.253.135.61:8080/api/v1/compute/ping
 ```
 
 Expected before presentation starts:
@@ -79,11 +79,11 @@ If PUBLIC_PING is 000/connection refused, fix Security Group inbound TCP 8080 fi
 
 ### D. Demo URLs (EC2 mode)
 
-- Home: http://YOUR_EC2_PUBLIC_IP:8080
-- Register: http://YOUR_EC2_PUBLIC_IP:8080/register.html
-- Login: http://YOUR_EC2_PUBLIC_IP:8080/login.html
-- Task: http://YOUR_EC2_PUBLIC_IP:8080/task.html
-- Swagger: http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html
+- Home: http://54.253.135.61:8080
+- Register: http://54.253.135.61:8080/register.html
+- Login: http://54.253.135.61:8080/login.html
+- Task: http://54.253.135.61:8080/task.html
+- Swagger: http://54.253.135.61:8080/swagger-ui/index.html
 
 ### D1. English 30-second stage script (ready to read)
 
@@ -95,19 +95,19 @@ This demonstrates end-to-end functionality: authentication, authorization, task 
 
 ### D2. English click order for live demo (fast path)
 
-1. Open `http://YOUR_EC2_PUBLIC_IP:8080`
+1. Open `http://54.253.135.61:8080`
 2. Click `Login` and sign in with prepared account A.
 3. Open `task.html`, create one task, and show it in list.
 4. Click `Logout`.
 5. Login with account B.
 6. Show account B task list does not contain account A data.
-7. Open `http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html` and expand one protected endpoint.
+7. Open `http://54.253.135.61:8080/swagger-ui/index.html` and expand one protected endpoint.
 8. Conclude with: "Auth + isolation + CRUD + API docs are all working on EC2."
 
 ### E. Optional: start/restart app on EC2 (if needed)
 
 ```bash
-ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@YOUR_EC2_PUBLIC_IP
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@54.253.135.61
 cd ~/COMP4442-semester-project-Group14
 pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true
 nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &
@@ -119,7 +119,7 @@ tail -n 60 ~/cloud-compute-prod.log
 If PUBLIC_PING is still 000 but LOCAL_PING is 200, use SSH local port forwarding:
 
 ```bash
-ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" -L 8080:localhost:8080 ubuntu@YOUR_EC2_PUBLIC_IP
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" -L 8080:localhost:8080 ubuntu@54.253.135.61
 ```
 
 Keep this terminal open, then demo with local browser URLs:
@@ -176,8 +176,8 @@ After EIP association, update `BASE_URL` once in this playbook and your demo com
 
 ```bash
 KEY="/home/domna/COMP4442 Semester Project Group 14.pem"
-HOST="ubuntu@YOUR_EC2_PUBLIC_IP"
-BASE_URL="http://YOUR_EC2_PUBLIC_IP:8080"
+HOST="ubuntu@54.253.135.61"
+BASE_URL="http://54.253.135.61:8080"
 ```
 
 ### 2) If EC2 was stopped, start it first
@@ -254,10 +254,10 @@ Then demo via:
    - Confirm `LOCAL_PING=200` and `PUBLIC_PING=200`
 
 - [ ] **Confirm public demo pages are reachable**
-   - Home: `http://YOUR_EC2_PUBLIC_IP:8080`
-   - Login: `http://YOUR_EC2_PUBLIC_IP:8080/login.html`
-   - Task: `http://YOUR_EC2_PUBLIC_IP:8080/task.html`
-   - Swagger: `http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html`
+   - Home: `http://54.253.135.61:8080`
+   - Login: `http://54.253.135.61:8080/login.html`
+   - Task: `http://54.253.135.61:8080/task.html`
+   - Swagger: `http://54.253.135.61:8080/swagger-ui/index.html`
 
 - [ ] **Fallback only if network/public ingress fails**
    - Use SSH tunnel (`-L 8080:localhost:8080`) and demo via localhost
@@ -271,20 +271,20 @@ Then demo via:
   Wait for message: "Started CloudComputeServiceApplication in X.XXX seconds"
 
 - [ ] **Verify Application is Running (Cloud-first)**
-   - Open browser: `http://YOUR_EC2_PUBLIC_IP:8080`
+   - Open browser: `http://54.253.135.61:8080`
    - Expected: Home page with "Cloud Compute Service" and navigation links
-   - Open Swagger API docs: `http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html`
+   - Open Swagger API docs: `http://54.253.135.61:8080/swagger-ui/index.html`
    - Expected: All endpoints visible
 
 - [ ] **Clear Browser Local Storage + Cookies (Important!)**
    - Press `Ctrl+Shift+Delete` (or Cmd+Shift+Delete on Mac)
-   - Delete site data for `YOUR_EC2_PUBLIC_IP:8080` (cookies + local storage)
+   - Delete site data for `54.253.135.61:8080` (cookies + local storage)
    - If using tunnel fallback, also clear site data for `localhost:8080`
    - This ensures demo starts with unauthenticated state
 
 - [ ] **Have Browser Windows Ready (Cloud mode)**
-   - **Tab 1:** http://YOUR_EC2_PUBLIC_IP:8080 (home page)
-   - **Tab 2:** http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html (API reference)
+   - **Tab 1:** http://54.253.135.61:8080 (home page)
+   - **Tab 2:** http://54.253.135.61:8080/swagger-ui/index.html (API reference)
   - **Tab 3:** Postman or curl for API testing (optional backup)
 
 - [ ] **Have Terminal Ready**
@@ -341,13 +341,13 @@ Then demo via:
      - Username: `alice`
      - Password: `AlicePass123!`
    - Click "Login"
-   - Page redirects to `http://YOUR_EC2_PUBLIC_IP:8080/task.html` (or localhost in fallback mode)
+   - Page redirects to `http://54.253.135.61:8080/task.html` (or localhost in fallback mode)
    - Show "Signed in as alice" message at top of page
    - **Speaking:** "Upon login, AuthService calls Spring's AuthenticationManager to verify credentials against the database. If valid, a SecurityContext is created and stored in the HTTP session."
 
 2. **Show Token Storage** (1:00 - 1:30)
    - Open Browser Dev Tools (F12)
-   - Go to Application → Local Storage → `YOUR_EC2_PUBLIC_IP:8080` (or `localhost:8080` in fallback mode)
+   - Go to Application → Local Storage → `54.253.135.61:8080` (or `localhost:8080` in fallback mode)
    - Show `accessToken` and `refreshToken`
    - **Speaking:** "The access token secures API calls. If it expires, refresh endpoint issues a new one without full re-login."
 
@@ -475,7 +475,7 @@ Then demo via:
 **Action Steps:**
 
 1. **Show Swagger Documentation** (0:00 - 0:45)
-   - Open Swagger UI: `http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html`
+   - Open Swagger UI: `http://54.253.135.61:8080/swagger-ui/index.html`
    - Expand "Authentication Endpoints" section
    - Show all endpoints: /auth/register, /auth/login, /auth/me, /auth/logout
    - Expand "Task Endpoints"
@@ -485,7 +485,7 @@ Then demo via:
 2. **Optional: Run Postman** (0:45 - 1:00)
    - (Only if time permits) Show sample curl command for login:
      ```bash
-       curl -X POST http://YOUR_EC2_PUBLIC_IP:8080/api/v1/auth/login \
+       curl -X POST http://54.253.135.61:8080/api/v1/auth/login \
        -H "Content-Type: application/json" \
        -d '{"username": "bob", "password": "BobPass456!"}'
      ```
@@ -516,13 +516,13 @@ All components work together to provide secure, isolated multi-user task managem
 ### Issue: Real online version cannot login
 **Quick diagnosis status (verified on 2026-04-17):**
 - Public backend API is healthy and login endpoint works on EC2.
-- Full deploy verification against `http://YOUR_EC2_PUBLIC_IP:8080` passed (register/login/tasks/files/refresh/logout).
+- Full deploy verification against `http://54.253.135.61:8080` passed (register/login/tasks/files/refresh/logout).
 
 **Likely causes are browser-side state, not backend service.**
 
 **Fix steps (in order):**
-1. Open `http://YOUR_EC2_PUBLIC_IP:8080/login.html` directly (avoid stale tabs).
-2. Clear site storage for `YOUR_EC2_PUBLIC_IP:8080` (Local Storage + cookies).
+1. Open `http://54.253.135.61:8080/login.html` directly (avoid stale tabs).
+2. Clear site storage for `54.253.135.61:8080` (Local Storage + cookies).
 3. Hard refresh (`Ctrl+Shift+R`).
 4. Retry login with a known valid account.
 5. If still failing, open browser DevTools > Network and check `POST /api/v1/auth/login`:
@@ -532,8 +532,8 @@ All components work together to provide secure, isolated multi-user task managem
 
 **Server-side confirmation commands:**
 ```bash
-curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://YOUR_EC2_PUBLIC_IP:8080/api/v1/compute/ping
-curl -s -X POST http://YOUR_EC2_PUBLIC_IP:8080/api/v1/auth/login \
+curl -s -o /dev/null -w "PUBLIC_PING=%{http_code}\n" http://54.253.135.61:8080/api/v1/compute/ping
+curl -s -X POST http://54.253.135.61:8080/api/v1/auth/login \
    -H "Content-Type: application/json" \
    -d '{"username":"<your_user>","password":"<your_password>"}'
 ```
@@ -546,7 +546,7 @@ If first command returns `200` and login API returns token JSON, backend is work
 **Fix:**
 1. Use status-based probe:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}\n" http://YOUR_EC2_PUBLIC_IP:8080/api/v1/compute/ping
+   curl -s -o /dev/null -w "%{http_code}\n" http://54.253.135.61:8080/api/v1/compute/ping
    ```
 2. Treat `200` as healthy.
 
@@ -571,7 +571,7 @@ If first command returns `200` and login API returns token JSON, backend is work
 ### Issue: Browser shows "Connection refused"
 **Solution:** Open terminal and check EC2 process and logs. If needed, restart on EC2:
 ```bash
-ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@YOUR_EC2_PUBLIC_IP "pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd ~/COMP4442-semester-project-Group14 && nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &"
+ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@54.253.135.61 "pkill -f cloud-compute-service-0.0.1-SNAPSHOT.jar || true; cd ~/COMP4442-semester-project-Group14 && nohup ./deploy/ec2/run-prod.sh > ~/cloud-compute-prod.log 2>&1 &"
 ```
 
 ### Issue: Cannot login (invalid credentials)
@@ -583,11 +583,11 @@ ssh -i "/home/domna/COMP4442 Semester Project Group 14.pem" ubuntu@YOUR_EC2_PUBL
 
 | Component | URL |
 |-----------|-----|
-| Home Page (Cloud Primary) | http://YOUR_EC2_PUBLIC_IP:8080 |
-| Register Page (Cloud Primary) | http://YOUR_EC2_PUBLIC_IP:8080/register.html |
-| Login Page (Cloud Primary) | http://YOUR_EC2_PUBLIC_IP:8080/login.html |
-| Task Page (Cloud Primary) | http://YOUR_EC2_PUBLIC_IP:8080/task.html |
-| Swagger Docs (Cloud Primary) | http://YOUR_EC2_PUBLIC_IP:8080/swagger-ui/index.html |
+| Home Page (Cloud Primary) | http://54.253.135.61:8080 |
+| Register Page (Cloud Primary) | http://54.253.135.61:8080/register.html |
+| Login Page (Cloud Primary) | http://54.253.135.61:8080/login.html |
+| Task Page (Cloud Primary) | http://54.253.135.61:8080/task.html |
+| Swagger Docs (Cloud Primary) | http://54.253.135.61:8080/swagger-ui/index.html |
 | Localhost Fallback (Tunnel) | http://localhost:8080 |
 
 ---

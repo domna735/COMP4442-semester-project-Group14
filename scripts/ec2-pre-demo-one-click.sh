@@ -2,8 +2,8 @@
 set -euo pipefail
 
 KEY_PATH_DEFAULT="/home/domna/COMP4442 Semester Project Group 14.pem"
-HOST_DEFAULT="ubuntu@13.236.152.79"
-BASE_URL_DEFAULT="http://13.236.152.79:8080"
+HOST_DEFAULT="ubuntu@54.253.135.61"
+BASE_URL_DEFAULT="http://54.253.135.61:8080"
 INSTANCE_ID_DEFAULT="i-0f2d54704d5c42a6a"
 REGION_DEFAULT="ap-southeast-2"
 REMOTE_REPO_DEFAULT="~/COMP4442-semester-project-Group14"
