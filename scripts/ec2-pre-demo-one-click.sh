@@ -2,8 +2,8 @@
 set -euo pipefail
 
 KEY_PATH_DEFAULT="/home/domna/COMP4442 Semester Project Group 14.pem"
-HOST_DEFAULT="ubuntu@3.107.95.44"
-BASE_URL_DEFAULT="http://3.107.95.44:8080"
+HOST_DEFAULT="ubuntu@13.236.152.79"
+BASE_URL_DEFAULT="http://13.236.152.79:8080"
 INSTANCE_ID_DEFAULT="i-0f2d54704d5c42a6a"
 REGION_DEFAULT="ap-southeast-2"
 REMOTE_REPO_DEFAULT="~/COMP4442-semester-project-Group14"
@@ -20,6 +20,8 @@ RUN_VERIFY=false
 OPEN_TUNNEL=false
 STRICT_HOST_KEY=false
 WAIT_SECONDS=300
+RESOLVE_FROM_AWS=false
+PREFER_DNS=false
 
 usage() {
   cat <<EOF
@@ -35,6 +37,8 @@ One-click EC2 pre-demo warm-up:
 
 Options:
   --auto-start           Start EC2 instance via AWS CLI first (if installed/configured)
+  --resolve-from-aws     Resolve current public DNS/IP from AWS for this instance
+  --prefer-dns           When resolving from AWS, use public DNS for SSH host
   --run-verify           Run deploy/ec2/verify-deploy.sh against BASE_URL
   --open-tunnel          Open SSH tunnel localhost:8080 -> EC2:localhost:8080 at end
   --key PATH             SSH private key path (default: $KEY_PATH_DEFAULT)
@@ -56,6 +60,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --run-verify)
       RUN_VERIFY=true
+      ;;
+    --resolve-from-aws)
+      RESOLVE_FROM_AWS=true
+      ;;
+    --prefer-dns)
+      PREFER_DNS=true
       ;;
     --open-tunnel)
       OPEN_TUNNEL=true
@@ -114,6 +124,46 @@ if [[ "$STRICT_HOST_KEY" == false ]]; then
   SSH_COMMON+=(-o StrictHostKeyChecking=no)
 fi
 
+resolve_current_endpoint() {
+  if ! command -v aws >/dev/null 2>&1; then
+    echo "[ERROR] AWS CLI not found but --resolve-from-aws was provided." >&2
+    exit 1
+  fi
+
+  local aws_out public_ip public_dns state
+  aws_out=$(aws ec2 describe-instances \
+    --instance-ids "$INSTANCE_ID" \
+    --region "$REGION" \
+    --query 'Reservations[0].Instances[0].[PublicIpAddress,PublicDnsName,State.Name]' \
+    --output text)
+
+  public_ip=$(awk '{print $1}' <<<"$aws_out")
+  public_dns=$(awk '{print $2}' <<<"$aws_out")
+  state=$(awk '{print $3}' <<<"$aws_out")
+
+  if [[ -z "$state" || "$state" == "None" ]]; then
+    echo "[ERROR] Unable to query instance state from AWS for $INSTANCE_ID" >&2
+    exit 1
+  fi
+
+  echo "[INFO] AWS instance state: $state"
+
+  if [[ -z "$public_ip" || "$public_ip" == "None" ]]; then
+    echo "[WARN] Public IP not ready yet. Continuing with current HOST/BASE_URL values."
+    return
+  fi
+
+  if [[ "$PREFER_DNS" == true && -n "$public_dns" && "$public_dns" != "None" ]]; then
+    HOST="ubuntu@$public_dns"
+  else
+    HOST="ubuntu@$public_ip"
+  fi
+
+  BASE_URL="http://$public_ip:8080"
+  echo "[INFO] Resolved HOST=$HOST"
+  echo "[INFO] Resolved BASE_URL=$BASE_URL"
+}
+
 if [[ "$AUTO_START" == true ]]; then
   if ! command -v aws >/dev/null 2>&1; then
     echo "[ERROR] AWS CLI not found but --auto-start was provided." >&2
@@ -122,6 +172,13 @@ if [[ "$AUTO_START" == true ]]; then
   echo "[INFO] Starting EC2 instance: $INSTANCE_ID ($REGION)"
   aws ec2 start-instances --instance-ids "$INSTANCE_ID" --region "$REGION" >/dev/null
 fi
+
+if [[ "$RESOLVE_FROM_AWS" == true ]]; then
+  resolve_current_endpoint
+fi
+
+echo "[INFO] Using HOST=$HOST"
+echo "[INFO] Using BASE_URL=$BASE_URL"
 
 echo "[INFO] Waiting for SSH on $HOST (timeout: ${WAIT_SECONDS}s)"
 deadline=$(( $(date +%s) + WAIT_SECONDS ))
