@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_FILE="$ROOT_DIR/.one-click-dev.log"
-BASE_URL="${BASE_URL:-http://localhost:8080}"
+BASE_URL="${BASE_URL:-https://localhost:8443}"
 STOP_AFTER_TEST=0
 STARTED_BY_SCRIPT=0
 APP_PID=""
@@ -16,7 +16,7 @@ Options:
   --stop-after-test   Stop the Spring Boot process after smoke test
 
 Environment variables:
-  BASE_URL            Target base URL for health check and smoke test (default: http://localhost:8080)
+  BASE_URL            Target base URL for health check and smoke test (default: https://localhost)
 EOF
 }
 
@@ -46,7 +46,7 @@ require_cmd() {
 
 is_up() {
   local code
-  code=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/compute/ping" || true)
+  code=$(curl -k -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/compute/ping" || true)
   [[ "$code" == "200" ]]
 }
 
@@ -80,7 +80,7 @@ echo "Project root: $ROOT_DIR"
 if is_up; then
   echo "Spring Boot app already running at $BASE_URL"
 else
-  echo "Starting Spring Boot app with H2 dev profile..."
+  echo "Starting Spring Boot app with dev profile (SSL enabled)..."
   (
     cd "$ROOT_DIR"
     mvn -q -DskipTests spring-boot:run > "$LOG_FILE" 2>&1
@@ -115,3 +115,5 @@ else
     echo "To stop app later: kill $APP_PID"
   fi
 fi
+^X
+
