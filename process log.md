@@ -546,7 +546,6 @@ Next:
 
 ---
 
-
 ### 2026-04-05 | Short-term Access Token and Long-term Refresh Token
 
 **Intent:**
@@ -572,7 +571,6 @@ Implement SQLite as the default database. H2 in-memory storage is insufficient f
 
 ---
 
-
 ### 2026-04-14 | implement sqlite as default database
 
 **Intent:**
@@ -593,3 +591,28 @@ SQLite’s persistence provides a more practical development experience than H2.
 
 **Next:**
 Ensure the system remains database-agnostic, allowing SQLite as the default while maintaining compatibility with PostgreSQL and MySQL. Proceed with cloud environment testing via EC2 deployment, focusing on file-based key loading and directory permissions.
+
+---
+
+
+
+### 2026-04-30 | Configure Web Server Header and Connection Timeouts
+
+**Intent:**
+improve web server configuration to protect against slow-client attacks, as Slowloris and ensure stable handling of large file uploads within the cloud environment.
+
+**Action:**
+
+* Updated `application.properties` to achieve global baseline configuration, including header timeout and size of 16KB.
+* Configured development with a relaxed timeout of 30s to prevent disconnections during manual API testing and debugging.
+* Implemented strict production configuration reduce header timeout to 5 seconds and connection timeout of 15 second to optimize resource and prevent slow-client attck.
+* Adjust the header maximun size to prevent potental attacker
+
+**Result:**
+The application is now more resilient to connection-exhaustion attacks. The baseline connection settings ensure again slow-client attacks while prevent idle socket hanging.
+
+**Decision / Interpretation:**
+Managing timeouts at the application level is a critical defense. The implement focus on service availability. The 16KB header limit specifically prevent large header in http request, and shorter timeout can prevent limit resource occupied by slow or malicious actor.
+
+**Next:**
+Ensure the system remains function to determine if those production limit is too aggressive for users. Next steps include achieve refresh token rotation.
