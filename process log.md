@@ -613,8 +613,6 @@ Ensure the system remains database-agnostic, allowing SQLite as the default whil
 
 ---
 
-<<<<<<< HEAD
-
 ### 2026-04-30 | Configure Web Server Header and Connection Timeouts
 
 **Intent:**
@@ -654,7 +652,6 @@ If an attacker intercepts a previous refresh token, it become invalid once the l
 
 **Decision / Interpretation:**
 While reusing refresh tokens is simpler, rotation the refresh token is the industry standard for security. Choosing rotation over static tokens significantly reduces the window of opportunity for session hijacking.The token rotation is critical to ensure only newest token can verity in the auth middeware.
-==================================================================================================================================================================================================================================================================================================================
 
 ## 2026-04-17 | JWT + SQLite Retest and Full Deploy Verification
 
@@ -1154,3 +1151,24 @@ If an attacker intercepts a previous refresh token, it become invalid once the l
 
 **Decision / Interpretation:**
 While reusing refresh tokens is simpler, rotation the refresh token is the industry standard for security. Choosing rotation over static tokens significantly reduces the window of opportunity for session hijacking.The token rotation is critical to ensure only newest token can verity in the auth middeware.
+
+---
+
+## 2026-04-30 | SSL Flow Stabilization After Main Sync + EC2 HTTPS Deployment Decision
+
+Intent:
+Stabilize the branch after pulling teammate updates from `main`, recover local SSL development flow, and decide whether EC2 production should switch to HTTPS immediately.
+
+Action:
+Pulled latest changes from `main` and performed a recovery pass for compile and runtime issues introduced by the merge. Fixed Java compile blockers (logger initialization in `AuthService` and exception class/file naming mismatch), corrected SSL config (`server.ssl.key-store-type=PKCS12`), and rebuilt smoke validation for HTTPS local flow (`https://localhost:8443`) including token refresh rotation and file API checks. Re-ran automated validation (`mvn -q test`) and one-click verification (`./scripts/one-click-dev.sh --stop-after-test`) until full pass.
+
+Result:
+Local HTTPS development flow is now stable and fully testable through one command. Production profile behavior for EC2 remains intentionally stable on HTTP/8080 (`server.ssl.enabled=false` in prod profile) to avoid breaking the currently working cloud demo path while SSL hardening is prepared separately.
+
+Decision / Interpretation:
+Yes, EC2 can deploy with HTTPS, but it should be done as a controlled deployment change (certificate + security group + reverse proxy or direct Spring SSL on 8443/443), not as an ad-hoc switch right before demo. Current safest status is: local uses HTTPS for validation, EC2 remains HTTP/8080 until the HTTPS rollout checklist is completed.
+
+Next:
+1. Prepare EC2 HTTPS rollout: certificate source (ACM/Let's Encrypt/self-signed), domain/DNS (or direct IP test), and security group update for 443.
+2. Choose deployment mode: Nginx reverse proxy on 443 -> Spring 8080 (recommended) or direct Spring Boot SSL on 8443/443.
+3. Run `deploy/ec2/verify-deploy.sh` against the HTTPS URL after rollout and archive evidence for report/demo.

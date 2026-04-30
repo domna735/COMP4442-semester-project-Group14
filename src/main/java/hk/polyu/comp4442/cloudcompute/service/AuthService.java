@@ -12,7 +12,8 @@ import hk.polyu.comp4442.cloudcompute.repository.AppUserRepository;
 import hk.polyu.comp4442.cloudcompute.security.CustomUserDetails;
 import hk.polyu.comp4442.cloudcompute.security.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,8 +23,9 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j // ENABLE LOGGING (SAVE TO FILE)
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;

@@ -30,6 +30,11 @@
 
 Use this section when presenting on your real AWS instance instead of localhost.
 
+### HTTPS Status Note (2026-04-30)
+- Current stable production demo endpoint is HTTP on port 8080.
+- HTTPS on EC2 is supported, but should be rolled out as a controlled change (certificate + security group + proxy/app config), not a last-minute toggle before live demo.
+- Recommended demo strategy now: keep EC2 on stable HTTP 8080, keep local SSL flow for technical validation.
+
 ### A. Current EC2 target
 - Current example (2026-04-25): Elastic IP 54.253.135.61
 
@@ -130,6 +135,170 @@ Keep this terminal open, then demo with local browser URLs:
 - http://localhost:8080/swagger-ui/index.html
 
 This still runs the backend on EC2, but traffic is tunneled through SSH.
+
+---
+
+## EC2 HTTPS Deployment (Nginx Reverse Proxy on 443)
+
+**Use this section only after demo is complete and you want to enable HTTPS for production.**
+
+### Prerequisites
+- EC2 instance running with app on http://localhost:8080
+- SSH access to instance
+- Domain name (or use EIP directly with self-signed cert for testing)
+- 5-10 minutes setup time
+
+### A. One-command HTTPS deployment (recommended)
+
+**Option 1: Self-signed certificate (for demo/testing)**
+
+```bash
+KEY="/home/domna/COMP4442 Semester Project Group 14.pem"
+HOST="ubuntu@54.253.135.61"
+BASE_URL="54.253.135.61"
+
+ssh -i "$KEY" "$HOST" 'bash -s' << 'EOF'
+  set -e
+  echo "=== Installing Nginx ==="
+  sudo apt-get update -qq
+  sudo apt-get install -y -qq nginx
+  
+  echo "=== Generating self-signed certificate ==="
+  sudo mkdir -p /etc/nginx/ssl
+  sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/nginx/ssl/private.key \
+    -out /etc/nginx/ssl/cert.crt \
+    -subj "/C=AU/ST=HK/L=HK/O=COMP4442/CN=54.253.135.61"
+  sudo chmod 600 /etc/nginx/ssl/private.key
+  
+  echo "=== Creating Nginx config ==="
+  sudo tee /etc/nginx/sites-available/default > /dev/null << 'NGINX'
+server {
+    listen 80;
+    server_name _;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name _;
+
+    ssl_certificate /etc/nginx/ssl/cert.crt;
+    ssl_certificate_key /etc/nginx/ssl/private.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    client_max_body_size 10M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+}
+NGINX
+  
+  echo "=== Testing Nginx config ==="
+  sudo nginx -t
+  
+  echo "=== Starting Nginx ==="
+  sudo systemctl restart nginx
+  sudo systemctl enable nginx
+  
+  echo "=== Nginx started successfully ==="
+  curl -sk https://localhost/api/v1/compute/ping
+EOF
+```
+
+Expected output at end: HTTP 200 JSON response.
+
+### B. Update Security Group for HTTPS
+
+```bash
+aws ec2 authorize-security-group-ingress \
+  --group-id sg-xxxxxxxxx \
+  --protocol tcp \
+  --port 443 \
+  --cidr 0.0.0.0/0 \
+  --region ap-southeast-2
+```
+
+Replace `sg-xxxxxxxxx` with your actual security group ID. Find it:
+
+```bash
+aws ec2 describe-instances \
+  --instance-ids i-0f2d54704d5c42a6a \
+  --region ap-southeast-2 \
+  --query 'Reservations[0].Instances[0].SecurityGroups[0].GroupId' \
+  --output text
+```
+
+### C. Verify HTTPS is working
+
+```bash
+# From your local machine
+curl -sk https://54.253.135.61/api/v1/compute/ping
+curl -sk https://54.253.135.61/login.html | head -n 20
+```
+
+Expected: HTTP 200 responses (ignore SSL cert warning with `-k` flag).
+
+### D. Update demo URLs to HTTPS
+
+Replace all instances of `http://54.253.135.61:8080` with `https://54.253.135.61` in browser tabs:
+
+- Home: https://54.253.135.61
+- Register: https://54.253.135.61/register.html
+- Login: https://54.253.135.61/login.html
+- Task: https://54.253.135.61/task.html
+- Swagger: https://54.253.135.61/swagger-ui/index.html
+
+Browser will warn about self-signed cert; click "Accept" / "Continue anyway".
+
+### E. Run verification against HTTPS endpoint
+
+```bash
+./deploy/ec2/verify-deploy.sh "https://54.253.135.61"
+```
+
+Expected: All checks should pass.
+
+### F. Rollback to HTTP (if needed)
+
+```bash
+KEY="/home/domna/COMP4442 Semester Project Group 14.pem"
+HOST="ubuntu@54.253.135.61"
+
+ssh -i "$KEY" "$HOST" 'sudo systemctl stop nginx && sudo systemctl disable nginx'
+echo "Nginx stopped. App still running on http://localhost:8080"
+```
+
+Then update demo URLs back to `http://54.253.135.61:8080`.
+
+### G. Production-grade HTTPS (with Let's Encrypt + domain)
+
+For real production after presentation:
+
+```bash
+KEY="/home/domna/COMP4442 Semester Project Group 14.pem"
+HOST="ubuntu@54.253.135.61"
+DOMAIN="your-domain.example.com"  # Replace with actual domain
+
+ssh -i "$KEY" "$HOST" 'bash -s' << EOF
+  set -e
+  sudo apt-get update -qq && sudo apt-get install -y -qq certbot python3-certbot-nginx
+  sudo certbot certonly --nginx --non-interactive --agree-tos -m admin@example.com -d $DOMAIN
+  # Certbot will auto-update Nginx config
+  sudo systemctl restart nginx
+  echo "HTTPS ready with Let's Encrypt certificate for $DOMAIN"
+EOF
+```
 
 ---
 
@@ -332,7 +501,7 @@ Then demo via:
 ### **SEGMENT 2: Login & Session Establishment (2 Minutes)**
 
 **Speaking Points:**
-> "After registration, users log in and receive an access token plus a refresh token. The frontend stores them client-side and sends the access token as Bearer authorization for protected APIs."
+> "After registration, users log in and receive an access token plus a refresh token. The frontend stores them in browser local storage and sends the access token as Bearer authorization for protected APIs."
 
 **Action Steps:**
 
@@ -343,7 +512,7 @@ Then demo via:
    - Click "Login"
    - Page redirects to `http://54.253.135.61:8080/task.html` (or localhost in fallback mode)
    - Show "Signed in as alice" message at top of page
-   - **Speaking:** "Upon login, AuthService calls Spring's AuthenticationManager to verify credentials against the database. If valid, a SecurityContext is created and stored in the HTTP session."
+   - **Speaking:** "Upon login, AuthService calls Spring's AuthenticationManager to verify credentials against the database. If valid, backend returns JWT access and refresh tokens used for subsequent API calls."
 
 2. **Show Token Storage** (1:00 - 1:30)
    - Open Browser Dev Tools (F12)
@@ -397,7 +566,7 @@ Then demo via:
 
 ---
 
-### **SEGMENT 4: User Isolation - Second User "Bob"** (2.5 Minutes)**
+### **SEGMENT 4: User Isolation - Second User "Bob" (2.5 Minutes)**
 
 **Speaking Points:**
 > "This is the critical security feature: user isolation. Two different users cannot see or access each other's tasks, even if they know the task ID."
@@ -408,8 +577,8 @@ Then demo via:
    - Click "Logout" button on task.html
    - Application redirects to login.html
    - Show page is now back to unauthenticated state
-   - Check browser cookies: JSESSIONID is cleared
-   - **Speaking:** "SessionContextLogoutHandler() clears the SecurityContext, removing the session cookie. Alice is now logged out."
+   - Check browser Local Storage: auth tokens are removed
+   - **Speaking:** "Logout revokes refresh token server-side and clears client-side auth tokens. Alice is now logged out."
 
 2. **Register Second User - "Bob"** (0:30 - 1:30)
    - Go to Register page
@@ -652,6 +821,10 @@ Buffer: Handle Q&A or technical issues
 
 ## Conclusion Statement
 
+### Optional HTTPS rollout line (if examiner asks)
+> "Our current public demo runs on stable HTTP/8080 for risk control. We can switch to HTTPS by enabling TLS termination (for example with Nginx on 443 and valid certificate) while keeping the same backend APIs and verification flow."
+
+
 > "In summary, we've demonstrated a fully functional multi-user task management system built with Spring Boot and Spring Security. The architecture implements:
 >
 > - **Secure Authentication:** BCrypt password hashing, JWT access+refresh token flow
@@ -663,6 +836,20 @@ Buffer: Handle Q&A or technical issues
 
 ---
 
-**Demo Version:** 1.0  
-**Last Updated:** 2026-04-18  
+---
+
+## HTTPS Deployment Decision Matrix
+
+| Scenario | Recommendation | Time | Cert | DNS | Demo URL |
+|----------|---|---|---|---|---|
+| Before demo | **Keep HTTP/8080** | 0 min | None | None | `http://54.253.135.61:8080` |
+| After demo, internal | Nginx + self-signed | 10 min | Self-signed | None | `https://54.253.135.61` |
+| After demo, production | Certbot + Nginx | 15 min | Let's Encrypt | Required | `https://your-domain.com` |
+| Local dev (HTTPS) | Spring Boot direct | 0 min | Built-in | None | `https://localhost:8443` |
+
+---
+
+**Demo Version:** 1.2  
+**Last Updated:** 2026-04-30  
 **Estimated Demo Time:** 12 minutes + Q&A
+**HTTPS Rollout Added:** 2026-04-30
