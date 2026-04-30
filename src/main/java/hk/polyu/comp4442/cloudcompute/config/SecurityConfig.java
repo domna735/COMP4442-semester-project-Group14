@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/task.html",
                                 "/edit.html",
                                 "/js/**",
+                                "/favicon.ico",
                                 "/api/v1/auth/refresh", // add refresh end point
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
