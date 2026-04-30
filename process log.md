@@ -52,6 +52,25 @@ Continue adding one log entry per meaningful development session (coding, testin
 
 ---
 
+## 2026-04-18 | EC2 Pre-Demo One-Click Automation for Live Presentation
+
+Intent:
+Reduce live-demo setup risk and startup time by converting the EC2 pre-demo command pack into a one-click executable flow.
+
+Action:
+Created `scripts/ec2-pre-demo-one-click.sh` to automate EC2 pre-demo warm-up: optional instance auto-start (AWS CLI), SSH readiness wait, remote build/start, cloud health checks (`LOCAL_PING` and `PUBLIC_PING`), optional deploy verifier run, and optional localhost SSH tunnel fallback. Updated `realtime_demo_playbook.md` to keep full manual commands while adding one-click usage for time-limited presentation scenarios.
+
+Result:
+The demo runbook now supports both transparency (manual command pack) and speed (single-script execution). This improves presentation reliability when EC2 is normally stopped for cost control and needs quick reactivation before class.
+
+Decision / Interpretation:
+Maintaining both manual and automated paths is the safest approach: the one-click script handles normal flow rapidly, while manual steps remain available for troubleshooting and grading explainability.
+
+Next:
+Use `./scripts/ec2-pre-demo-one-click.sh --run-verify` before each demo rehearsal, and use `--open-tunnel` only when public network access is restricted.
+
+---
+
 ## 2026-03-24 | Base Setting Completion
 
 Intent:
@@ -594,6 +613,8 @@ Ensure the system remains database-agnostic, allowing SQLite as the default whil
 
 ---
 
+<<<<<<< HEAD
+
 ### 2026-04-30 | Configure Web Server Header and Connection Timeouts
 
 **Intent:**
@@ -617,7 +638,505 @@ Ensure the system remains function to determine if those production limit is too
 
 ---
 
+### 2026-04-30 | Finalizing refresh Token Lifecycle
 
+**Intent:**
+Enhance the security of the authentication lifecycle by implementing Refresh Token Rotation.
+
+**Action:**
+
+* Updated `AuthController.java` to to generate a completely new Refresh Token when each successful refresh request.
+* Adjust the `auth.js` to store new refresh token
+
+**Result:**
+
+If an attacker intercepts a previous refresh token, it become invalid once the legitimate user refreshes their session by refresh access token. The system now implements a "Single Use" refresh token policy. This prevent any reuse of an old token will pass on the authentication, prevent long-lived credentials.
+
+**Decision / Interpretation:**
+While reusing refresh tokens is simpler, rotation the refresh token is the industry standard for security. Choosing rotation over static tokens significantly reduces the window of opportunity for session hijacking.The token rotation is critical to ensure only newest token can verity in the auth middeware.
+==================================================================================================================================================================================================================================================================================================================
+
+## 2026-04-17 | JWT + SQLite Retest and Full Deploy Verification
+
+Intent:
+Execute a full retest after JWT dual-token migration and SQLite default persistence changes, then validate deployment readiness with an end-to-end verification flow.
+
+Action:
+Generated and installed ECDSA key material into `src/main/resources/cert` so JWT initialization works in test/runtime. Re-ran `mvn clean test` and diagnosed integration failures caused by legacy session-based assumptions in tests. Updated `TaskUiAndApiIntegrationTests` to use Bearer access tokens from `/api/v1/auth/login` and to validate current stateless behavior (public page serving + API protection). Expanded `scripts/smoke-test.sh` from partial coverage to full JWT flow: ping, register, login, `/auth/me`, create/list tasks, refresh token, logout, and unauthenticated access rejection. Updated `deploy/ec2/verify-deploy.sh` to align with token-based security and run full deployment checks including protected API access via JWT.
+
+Result:
+Retest and deploy verification now pass successfully.
+
+- Maven tests: 4/4 passed (`CloudComputeServiceApplicationTests` + `TaskUiAndApiIntegrationTests`)
+- Smoke test: full JWT + refresh flow passed
+- Deploy verifier: all checks passed (health, Swagger/OpenAPI, register/login, me, task create/list, refresh, logout)
+
+Decision / Interpretation:
+The system is now verifiably aligned with stateless JWT architecture and SQLite persistence. Verification tooling now matches actual security semantics (task APIs require token and return 401 when unauthenticated), reducing false negatives during demo or EC2 validation.
+
+Next:
+Run `deploy/ec2/verify-deploy.sh <ec2-base-url>` against the live EC2 endpoint after deployment and attach the pass output to final evidence artifacts.
+
+---
+
+## 2026-04-17 | Security Hardening Plan for File Upload + Database and EC2 Clarification
+
+Intent:
+Document what was completed after JWT and SQLite migration, and add a clearer technical explanation for three critical production topics: secure file upload, database strategy, and EC2 deployment operation.
+
+Action:
+Consolidated current project status and added a hardening direction for file handling. Clarified that upload functionality should not trust file name, extension, MIME type, or file content from client input alone. Defined a safer upload flow using Docker-based quarantine scanning before any file becomes downloadable:
+
+- Stage 1 (intake): receive file to non-public staging storage with randomized server-side file name and strict size limit.
+- Stage 2 (validation): enforce extension allowlist and server-side MIME/content signature checks.
+- Stage 3 (quarantine scan): run malware scan inside an isolated Docker container with no outbound network and read-only scanner image.
+- Stage 4 (promotion): only move clean files to application-accessible storage; block and log suspicious files.
+- Stage 5 (audit): record uploader, timestamp, checksum, scan result, and source IP for traceability.
+
+Expanded database explanation for team and report consistency:
+
+- Local default uses SQLite for persistence across restarts and simpler demo setup.
+- Production keeps database-agnostic path via environment-driven datasource settings for MySQL/PostgreSQL on AWS RDS.
+- Token persistence behavior (refresh token lifecycle) is now aligned with SQLite constraints by deleting old user token before inserting a new one.
+- Verification expectation: same API behavior should hold across SQLite local and RDS production profiles.
+
+Expanded EC2 explanation for operational readiness:
+
+- Use systemd service for auto-restart and reboot resilience.
+- Keep secrets and datasource values in environment file, not hardcoded in code.
+- Restrict security groups to minimum required ports (SSH and app/API), and allow DB only from EC2 security group.
+- Run deployment verification after startup using `deploy/ec2/verify-deploy.sh` and keep output as evidence.
+- Ensure JWT key files and upload directories have correct ownership and least-privilege permissions before service start.
+
+Result:
+The process log now captures both completed retest work and a concrete security-hardening direction for file upload defense. Database and EC2 sections are now clearer for final report writing, demo Q&A, and production-style explanation.
+
+Decision / Interpretation:
+Adding Docker-based quarantine for uploads is necessary defense-in-depth against web attack vectors (malicious scripts, polyglot files, and disguised binaries). Clear environment separation (SQLite local, RDS production) and stricter EC2 operations reduce deployment risk and improve reproducibility.
+
+Next:
+
+1. Implement upload quarantine pipeline with Docker scanner integration and fail-closed behavior.
+2. Add automated tests for upload allowlist, blocked file types, and quarantine outcomes.
+3. Execute live EC2 verification and attach logs/screenshots as final evidence artifacts.
+
+---
+
+## 2026-04-17 | File Upload Safety Audit + Token Connectivity and EC2 Service Verification
+
+Intent:
+Validate whether current file upload behavior is safe enough for project demonstration, and verify that JWT token migration is fully connected across tests, smoke checks, and deployment verification flow.
+
+Action:
+Reviewed and hardened file upload security path in backend and scripts:
+
+- Updated security policy so `/api/v1/files/**` requires authentication, and removed unintended permissive fallback by setting unmatched routes to authenticated by default.
+- Hardened upload handling in `FileController` by adding filename sanitization, path traversal checks, extension allowlist validation, and randomized server-side storage names.
+- Added download path boundary validation to reject unsafe paths.
+- Extended `scripts/smoke-test.sh` with file security checks (unauthenticated file-list rejection) plus authenticated upload/list/download verification.
+- Extended `deploy/ec2/verify-deploy.sh` with file endpoint checks for unauthenticated rejection and authenticated upload/list/download flow.
+- Updated integration test expectation to match protected page behavior (`/task.html` redirects to `/login.html` when unauthenticated).
+
+Executed verification runs:
+
+- `mvn clean test`
+- `./scripts/one-click-dev.sh --stop-after-test`
+- `./deploy/ec2/verify-deploy.sh http://localhost:8080`
+
+Result:
+All validation paths passed after hardening.
+
+- Maven tests: 4/4 passed (0 failures, 0 errors)
+- Smoke test: full JWT + refresh + file upload/list/download flow passed
+- Deploy verifier (localhost simulation of EC2 checks): all checks passed including file endpoint auth behavior
+
+Decision / Interpretation:
+The current implementation is significantly safer than before and token-based connectivity is consistent end-to-end. File endpoints now enforce authentication and common traversal/name abuse vectors are blocked. However, upload security is not yet "production-complete" because malware scanning and deep content inspection are not implemented yet.
+
+Next:
+
+1. Run `deploy/ec2/verify-deploy.sh <ec2-base-url>` on live EC2 and archive output.
+2. Add content signature/MIME sniffing and optional checksum logging for uploads.
+3. Implement Docker quarantine scanning before making uploaded files downloadable.
+
+---
+
+## 2026-04-17 | Server Database Setup Flow and Playbook Synchronization
+
+Intent:
+Prepare a safer and repeatable server-side database setup process for EC2 production service and update team documentation so it matches the current JWT + SQLite/RDS architecture.
+
+Action:
+Implemented deployment setup improvements:
+
+- Added `deploy/ec2/setup-db.sh` to validate production DB environment values, parse JDBC URL, verify host/port reachability, and optionally test SQL login credentials (MySQL/PostgreSQL clients when available).
+- Updated `deploy/ec2/.env.prod.example` with current required variables, including JWT key path environment variables and SQLite fallback example for single-server demo mode.
+- Updated `deploy/ec2/run-prod.sh` to enforce required DB/JWT variables before startup and print preflight runtime context.
+
+Updated documentation files to reflect what has been completed:
+
+- `playbook.md`: replaced outdated H2/session-focused guidance with SQLite-default dev + EC2/RDS production setup flow, including new `setup-db.sh` usage.
+- `one_command_playbook.md`: updated smoke flow to include refresh token and protected file upload/list/download checks, plus unauthenticated `401` checks.
+- `realtime_demo_playbook.md`: corrected demo narrative to JWT access/refresh token behavior and updated Swagger URL/reference steps.
+
+Result:
+Server database setup for deployment is now easier to execute and diagnose. Production startup has stronger preflight validation, and the key operational/demonstration documents are aligned with the current implementation state.
+
+Decision / Interpretation:
+Adding a dedicated DB setup check script reduces EC2/RDS onboarding errors and shortens troubleshooting time. Keeping playbooks synchronized with real code behavior (JWT, SQLite default, protected file APIs) improves demo reliability and report consistency.
+
+Next:
+
+1. Fill `deploy/ec2/.env.prod` with real RDS and JWT key values on EC2.
+2. Run `./deploy/ec2/setup-db.sh deploy/ec2/.env.prod` on EC2 before starting service.
+3. Start service with `./deploy/ec2/run-prod.sh`, then run `./deploy/ec2/verify-deploy.sh <ec2-base-url>` and archive outputs.
+
+---
+
+## 2026-04-17 | Assignment Requirement Compliance Audit and Documentation Refresh
+
+Intent:
+Update core project-facing documents and perform a metric-by-metric compliance check against COMP4442 final evaluation requirements.
+
+Action:
+Updated `full_technical_report.md` to align with the current implementation state (JWT access/refresh auth, SQLite local default, protected file APIs, and EC2 verification workflow). Rewrote `README.md` to provide clean and consistent setup/deployment guidance, API coverage, and an assignment compliance checklist with explicit pending actions. Audited repository traceability using git history and contributor summaries to evaluate development-trace completeness. Cross-checked current artifacts against rubric dimensions: technological merit, GitHub trace, presentation/demo clarity, and document quality constraints.
+
+Result:
+The project now has synchronized high-level documentation reflecting actual runtime behavior and deployment flow. Requirement audit indicates:
+
+- Technological merit: strong alignment with course technologies and practical cloud deployment workflow.
+- GitHub development trace: substantial and multi-phase (commit history and contributors confirmed).
+- Presentation/demo clarity: mostly ready; final timed rehearsal and role-division verification still required.
+- Document quality: templates and content are prepared; final `.pptx`/`.docx` export must be checked against strict formatting/page limits before submission.
+
+Decision / Interpretation:
+Completing a requirements audit before final packaging reduces grading risk and helps identify the remaining non-code tasks that most often cause point deductions (format compliance, timing control, and repository sharing logistics).
+
+Next:
+
+1. Share repository access with `wchshapp_business@icloud.com`.
+2. Run final 12-minute rehearsal and verify member job-division explanation in slides/script.
+3. Export final PowerPoint and Word deliverables and validate all format constraints before Learn@PolyU zip submission.
+
+---
+
+## 2026-04-17 | Systemd Template Fix + Slide/Report Consistency Pass + Final Checklist
+
+Intent:
+Close remaining documentation and deployment-template risks before final submission by fixing the systemd template typo, aligning slide/report wording with current architecture, and preparing a practical go/no-go checklist.
+
+Action:
+Updated `deploy/systemd/cloud-compute.service` to remove malformed trailing environment lines (including the `nvironment=` typo) so the template consistently relies on `EnvironmentFile`. Performed a consistency pass on `ppt.md` and `report.md`, replacing outdated session/H2/old-test-count wording with current implementation details: JWT access+refresh auth, SQLite default local runtime, protected file APIs, and current automated test status. Created `final_submission_readiness_checklist.md` with metric-aligned checkboxes for technical merit, GitHub trace, presentation clarity, format compliance, deployment verification, and final zip submission readiness.
+
+Result:
+Operational template and core presentation/report templates are now aligned with current project behavior. Team now has a concrete final checklist to reduce avoidable grading deductions from formatting, mismatch, or missed evidence items.
+
+Decision / Interpretation:
+Final-stage quality issues are most often caused by document mismatch and submission process gaps rather than code defects. A checklist-driven review significantly improves submission reliability.
+
+Next:
+
+1. Perform one full timed rehearsal using `ppt_script.md` and mark readiness checklist items.
+2. Export final `.pptx` and `.docx`, then verify strict page/format limits.
+3. Run live EC2 deploy verification and archive output for evidence.
+
+---
+
+## 2026-04-17 | Security Hardening Patch (File Isolation + Token Revocation/Rotation + Prod Config Tightening)
+
+Intent:
+Apply prioritized security hardening changes identified in the architecture review and validate that no regression is introduced.
+
+Action:
+Implemented the hardening plan in three ordered steps:
+
+1. File API ownership isolation:
+
+- Updated `FileController` so upload/list/download are scoped to authenticated user directories (`uploads/user-<id>/...`) instead of shared global listing.
+- Kept filename sanitization and storage boundary checks in place while enforcing per-user path boundaries.
+
+2. Refresh-token lifecycle hardening:
+
+- Added refresh-token revocation on logout in `AuthService` (revoke token by authenticated user).
+- Added refresh-token rotation in `RefreshTokenService` and switched `/api/v1/auth/refresh` to return a newly rotated refresh token.
+- Updated frontend `auth.js` to persist rotated `refreshToken` after successful refresh.
+- Added integration test coverage for rotation and post-logout refresh rejection.
+
+3. Production/profile safety tightening:
+
+- Changed global error-detail defaults to non-verbose (`application.properties`) and kept verbose error details only in dev profile.
+- Cleaned `application-prod.properties` duplicated JPA settings.
+- Switched production JPA defaults to env-driven values with safer default `ddl-auto=validate` and `show-sql=false`.
+
+Validation performed:
+
+- Ran `TaskUiAndApiIntegrationTests` after file isolation changes (pass).
+- Ran `TaskUiAndApiIntegrationTests` again after token hardening + new test (pass).
+- Ran full test suite (`mvn test` path via tool) after config tightening (pass, 7/7).
+
+Result:
+The service now enforces per-user file visibility, reduces refresh-token replay risk through rotation, revokes refresh tokens on logout, and uses safer production-oriented defaults. Test suite remained green after all hardening changes.
+
+Decision / Interpretation:
+These changes significantly reduce practical attack surface while preserving the current architecture and demo workflow. Remaining medium-risk areas (for future work) include token storage strategy (localStorage), advanced file content scanning, and optional stricter refresh-failure response semantics (401/400 instead of generic 5xx for invalid refresh token).
+
+Next:
+
+1. Update smoke/deploy scripts to add explicit refresh-rotation assertion (old refresh token rejected after refresh).
+2. Consider moving refresh token to `HttpOnly` secure cookie in a future hardening iteration.
+3. Add file MIME/signature checks and optional malware-scanning stage for uploaded files.
+
+---
+
+## 2026-04-17 | Three-Tier Runtime Validation and File Upload Security Re-Check
+
+Intent:
+Confirm the full three-tier system is operational end-to-end and verify that file upload controls hold under practical abuse scenarios.
+
+Action:
+Executed full runtime checks across backend API, auth flow, task flow, and file flow using local startup + automated scripts + targeted curl probes:
+
+1. Operational checks:
+
+- Ran local one-click smoke flow and deployment verification checks against localhost.
+- Re-validated auth register/login/refresh/logout and task CRUD flows.
+
+2. File security checks:
+
+- Verified cross-user file isolation at runtime (user B cannot list/download user A files).
+- Verified extension allowlist enforcement (disallowed extension upload rejected with `415`).
+- Hardened download path handling by sanitizing download filename input in `FileController` (same validation model as upload).
+
+3. Stability verification:
+
+- Ran focused integration tests again (`CloudComputeServiceApplicationTests`, `TaskUiAndApiIntegrationTests`) and confirmed pass.
+
+Result:
+Three-tier behavior is functioning in runtime checks, core features remain usable, and file-upload ownership/extension protections are effective. Download path normalization is now stricter via server-side filename sanitization.
+
+Decision / Interpretation:
+Current build is acceptable for controlled demo/submission use with meaningful hardening in place. One behavior to refine in a later iteration is error semantics for blocked traversal-style download URLs (currently blocked but may surface as `500` instead of a cleaner `4xx` in some cases).
+
+Next:
+
+1. Add a dedicated regression test for traversal-style download requests to lock expected response semantics.
+2. Optionally normalize blocked traversal responses to deterministic `400/404` at the framework edge.
+
+---
+
+## 2026-04-17 | Upload Safety Limits + Optional Docker Sandbox Scan + Traversal Regression
+
+Intent:
+Complete the next hardening step in one pass: enforce safer upload limits, add optional sandbox scanning, and lock traversal download behavior through automated regression testing.
+
+Action:
+Implemented upload hardening and tests together:
+
+1. Upload safety controls in backend:
+
+- Added explicit upload size cap (`file.upload.max-size-bytes`, default 5 MB) with `413 Payload Too Large` response.
+- Kept extension allowlist checks and added MIME/content-type validation (text/image + selected application types).
+- Added quarantine staging directory (`uploads/.quarantine`) before promotion to user storage.
+
+2. Optional Docker sandbox scan pipeline:
+
+- Added `FileScanService` with fail-closed scanning option.
+- When enabled (`file.scan.enabled=true`), upload flow runs `docker run --network none --rm` with mounted staged file and `clamscan` command.
+- Upload is rejected if scan fails, times out, or scanner command is unavailable.
+
+3. Traversal behavior regression coverage:
+
+- Added integration regression test for traversal-style file download requests and locked expected response to `400/404`.
+- Added integration tests for blocked unsafe extension upload and oversized upload rejection.
+
+4. Deployment env template update:
+
+- Updated `deploy/ec2/.env.prod.example` with upload-limit and scan-related environment variables.
+
+Result:
+The file upload surface now has stronger guardrails (size, MIME, quarantine stage), and optional sandbox scanning is ready for environments that provide Docker + scanner image. Regression tests now cover traversal semantics and upload safety limits.
+
+Decision / Interpretation:
+This change significantly improves practical upload safety while keeping demo usability. The scanner is optional by default to avoid introducing runtime dependency risk on environments without Docker, but can be switched on in production-like setups.
+
+Next:
+
+1. Enable `FILE_SCAN_ENABLED=true` on EC2 and preload scanner image before final security demo.
+2. Add a script-level assertion that scan failure blocks upload when sandbox scan is enabled.
+
+---
+
+## 2026-04-17 | Live EC2 Verification Evidence Automation
+
+Intent:
+Close the final evidence gap by making live EC2 verification output archival repeatable for final demo and report submission.
+
+Action:
+Added `deploy/ec2/live-verify-archive.sh` to wrap live endpoint verification and archive all evidence artifacts in one run:
+
+1. Runs `deploy/ec2/verify-deploy.sh <ec2-base-url>` and saves full output to a timestamped log.
+2. Saves metadata (timestamp, URL, host, user, commit, exit code) for traceability.
+3. Stores output in `evidence/ec2/<timestamp>_<host>/`.
+4. Attempts optional auto-screenshots (`swagger-ui` and home page) using headless Chromium when available.
+
+Also added `evidence/ec2/README.md` and updated `README.md` with explicit command usage.
+
+Result:
+The team can now produce final live-EC2 evidence in a consistent structure with minimal manual steps, reducing risk of missing proof artifacts in the final report/demo package.
+
+Decision / Interpretation:
+Automating evidence capture improves reproducibility and grading readiness by turning a manual, error-prone step into a deterministic process.
+
+Next:
+
+1. Run `./deploy/ec2/live-verify-archive.sh http://<EC2_PUBLIC_IP>:8080` against the deployed EC2 service.
+2. If screenshots are not auto-captured, add one manual screenshot into the same run folder.
+3. Reference the generated run folder path in `final_submission_evidence_summary.md`.
+
+---
+
+## 2026-04-17 | Public EC2 Reachability Restored + Live Evidence Captured
+
+Intent:
+Confirm the real EC2 deployment is publicly reachable for presentation and generate a final verifiable evidence package.
+
+Action:
+
+1. Verified remote app health on EC2 host and public ingress behavior:
+
+- Public health check returned `PUBLIC_PING=200` for `/api/v1/compute/ping`.
+- External TCP check succeeded on `3.107.95.44:8080`.
+
+2. Executed one-command live verification archive:
+
+- `./deploy/ec2/live-verify-archive.sh http://3.107.95.44:8080`
+
+3. Generated evidence folder:
+
+- `evidence/ec2/20260417-234836_3.107.95.44_8080/`
+- Includes: `verify-deploy.log`, `metadata.txt`.
+
+Result:
+The deployed Spring Boot service is now publicly reachable and the verification script passed with archived artifacts for submission/demo traceability.
+
+Decision / Interpretation:
+Cloud demo path is operational and evidence collection is complete for this run. Keep SG `8080` rule temporary for presentation window and remove/restrict afterward.
+
+Next:
+
+1. Use `http://3.107.95.44:8080` as the primary demo URL.
+2. After presentation, stop EC2 to control Free Tier usage and tighten SG rules.
+
+---
+
+## 2026-04-18 | EC2 Health-Check Logic Fix + Authenticated Download Demo Stabilization
+
+Intent:
+Remove a misleading EC2 startup failure signal, align verification checks with actual API behavior, and stabilize the live demo flow for protected file downloads.
+
+Action:
+
+1. Reproduced the deployment check issue and confirmed the polling script was using an outdated condition (`grep -q 'pong'`) against `/api/v1/compute/ping`.
+2. Confirmed current ping behavior is HTTP `200` with JSON payload (`{"message":"Compute service is running"}`), not a literal `pong` marker.
+3. Replaced validation mindset from body-string matching to status-code based checks for startup/readiness.
+4. Re-validated cloud endpoint and auth flow using concise status checks:
+
+- `PING_LOCAL=200`
+- `PING_PUBLIC=200`
+- `LOGIN_STATUS=200`
+- `ME_STATUS=200`
+
+5. Re-confirmed protected file API behavior for demo consistency:
+
+- download without token returns `401`
+- same download with Bearer token returns `200`
+
+6. Synced frontend/demo guidance to emphasize token-authenticated download from UI actions instead of directly opening protected download URLs in browser address bar.
+
+Result:
+False startup alarms were eliminated, cloud health verification became deterministic, and the protected file download demo path is now consistent and reproducible.
+
+Decision / Interpretation:
+For operational checks, HTTP status-based readiness is more robust than brittle string matching in response bodies. For JWT-protected file endpoints, browser direct-link behavior and API behavior must be clearly separated in demo instructions.
+
+Next:
+
+1. Keep all readiness scripts aligned to status-code checks for `/api/v1/compute/ping`.
+2. Use UI click-download flow (token-authenticated fetch) during live demo.
+3. Keep one fallback terminal proof command ready to show `401` (no token) vs `200` (with token).
+
+---
+
+## 2026-04-18 | Academic Essay Report Refinement + Full Validation Re-Run
+
+Intent:
+Produce a more academically oriented technical essay version of the full report, then run full project validation and align test expectations with current security design.
+
+Action:
+
+1. Refined `full_technical_report academically technical essay version.md` with stronger academic framing:
+
+- clearer problem statement and research-style questions,
+- methodology emphasis (design-implementation-verification lifecycle),
+- explicit evidence table for verification outcomes,
+- strengthened validity/limitation discussion using technical-report style language.
+
+2. Executed full validation workflow:
+
+- `mvn -q clean test`
+- `./scripts/one-click-dev.sh --stop-after-test`
+- `./scripts/one-click-dev.sh`
+- `./deploy/ec2/verify-deploy.sh http://localhost:8080`
+
+3. Diagnosed a single integration-test mismatch after recent security/page-access updates:
+
+- `TaskUiAndApiIntegrationTests.shouldServePublicPagesAndProtectTaskPage` expected `302` redirect for `/task.html`,
+- actual behavior is `200` because `/task.html` is intentionally public and APIs remain protected.
+
+4. Updated test expectation accordingly:
+
+- renamed test to `shouldServePublicPagesAndProtectProtectedApis`,
+- changed `/task.html` assertion from redirect (`302`) to page served (`200`) with content check,
+- retained protected API unauthenticated assertion (`/api/v1/tasks` -> `401`).
+
+Result:
+The report is now closer to an academically technical essay style, and project verification is consistent with implemented security boundaries (public static pages + protected business APIs).
+
+Decision / Interpretation:
+This round resolved the gap between historical test assumptions and current architecture behavior. Static page accessibility and API protection should be validated as separate concerns in regression tests.
+
+Next:
+
+1. Keep integration tests synchronized with documented security policy whenever route accessibility changes.
+2. Use the academically refined report as the primary technical narrative source for final `.docx` preparation.
+3. Continue final evidence packaging with latest test/deploy outputs and commit references.
+
+---
+
+
+
+### 2026-04-30 | Configure Web Server Header and Connection Timeouts
+
+**Intent:**
+improve web server configuration to protect against slow-client attacks, as Slowloris and ensure stable handling of large file uploads within the cloud environment.
+
+**Action:**
+
+* Updated `application.properties` to achieve global baseline configuration, including header timeout and size of 16KB.
+* Configured development with a relaxed timeout of 30s to prevent disconnections during manual API testing and debugging.
+* Implemented strict production configuration reduce header timeout to 5 seconds and connection timeout of 15 second to optimize resource and prevent slow-client attck.
+* Adjust the header maximun size to prevent potental attacker
+
+**Result:**
+The application is now more resilient to connection-exhaustion attacks. The baseline connection settings ensure again slow-client attacks while prevent idle socket hanging.
+
+**Decision / Interpretation:**
+Managing timeouts at the application level is a critical defense. The implement focus on service availability. The 16KB header limit specifically prevent large header in http request, and shorter timeout can prevent limit resource occupied by slow or malicious actor.
+
+**Next:**
+Ensure the system remains function to determine if those production limit is too aggressive for users. Next steps include achieve refresh token rotation.
+
+---
 
 ### 2026-04-30 | Finalizing refresh Token Lifecycle
 

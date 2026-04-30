@@ -6,11 +6,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.HttpStatusRequestRejectedHandler;
 
 import hk.polyu.comp4442.cloudcompute.security.AuthTokenFilter;
 
@@ -20,6 +22,11 @@ public class SecurityConfig {
     @Bean
     public AuthTokenFilter authTokenFilter() {
         return new AuthTokenFilter();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return web -> web.requestRejectedHandler(new HttpStatusRequestRejectedHandler(HttpServletResponse.SC_BAD_REQUEST));
     }
 
     @Bean
@@ -35,9 +42,9 @@ public class SecurityConfig {
                                 "/home.html",
                                 "/login.html",
                                 "/register.html",
-                                "/js/**",
                                 "/task.html",
-                                "/edit.html", // add this to allow JWT work
+                                "/edit.html",
+                                "/js/**",
                                 "/api/v1/auth/refresh", // add refresh end point
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
@@ -45,10 +52,10 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**")
                         .permitAll()
-                        .requestMatchers("/task.html", "/edit.html", "/api/v1/tasks/**", "/api/v1/auth/me",
-                                "/api/v1/auth/logout")
+                    .requestMatchers("/api/v1/tasks/**", "/api/v1/files/**", "/api/v1/auth/me",
+                        "/api/v1/auth/logout")
                         .authenticated()
-                        .anyRequest().permitAll())
+                    .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
                     String uri = request.getRequestURI();
                     if (uri.endsWith(".html") && !uri.equals("/login.html")) {

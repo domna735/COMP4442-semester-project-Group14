@@ -1,0 +1,7 @@
+timestamp=20260417-234836
+base_url=http://3.107.95.44:8080
+host=domna-virtual-machine
+user=domna
+git_commit=d53d826
+verify_exit_code=0
+screenshots_auto_captured=0

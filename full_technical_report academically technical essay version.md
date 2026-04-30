@@ -1,5 +1,5 @@
 # Cloud Compute Service
-## Comprehensive Project Report (Updated)
+## Academically Oriented Technical Essay (Updated)
 
 Date: 2026-04-18  
 Project: COMP4442 Semester Project Group 14  
@@ -70,17 +70,15 @@ References and Project Artifacts
 
 ## Abstract
 
-This report presents the updated design, implementation, verification, and operationalization of Cloud Compute Service, a Spring Boot microservice developed for COMP4442. The current system integrates four core capabilities in one platform: JWT-based authentication (access token plus refresh token), user-scoped task management, utility compute APIs, and protected file upload/download APIs.
+This technical essay examines the design, implementation, and verification of Cloud Compute Service, a Spring Boot microservice engineered for secure multi-user task and file management in a cloud-deployable setting. The implemented system integrates four core capabilities: JWT-based authentication (access and refresh tokens), user-scoped task CRUD operations, protected file upload/list/download APIs, and compute utility endpoints.
 
-The implementation follows a layered architecture (Controller, Service, Repository, Entity) with security and validation controls applied across multiple layers. Authentication now uses signed JWT tokens, with ECDSA key-based signing and verification. Authorization is enforced for task and file routes, while selected public routes remain accessible for registration, login, and health/documentation checks.
+Methodologically, the work follows an iterative engineering lifecycle: requirement definition, architecture realization, security hardening, and multi-layer verification. The architecture adopts a clear layered structure (Controller-Service-Repository-Entity) and enforces authorization boundaries through centralized security configuration and ownership-constrained data access. Token integrity is provided by ECDSA-based JWT signing and verification, while password storage uses BCrypt hashing.
 
-From an engineering-process perspective, the project includes repeatable local and deployment verification workflows. Local one-command scripts start the service and execute full smoke checks, including refresh-token flow and file operations. Deployment scripts support EC2 startup, database prechecks, and end-to-end deployment verification. Automated tests and script outputs demonstrate stable behavior after the latest architecture updates.
-
-The project demonstrates a practical backend lifecycle suitable for course-scale production-style demonstration: architecture evolution, security hardening, data ownership isolation, reproducible verification, and deployability.
+Empirical verification combines automated integration tests, local one-command smoke validation, and deployment-level script-based checks. These checks cover authentication correctness, route protection semantics, task isolation, file ownership enforcement, and refresh-token lifecycle behavior. The project therefore contributes a reproducible, evidence-backed implementation that is suitable for course-scale production-style demonstration, with explicit documentation of limitations and future hardening directions.
 
 ## Executive Summary
 
-Cloud Compute Service solves a practical course-aligned problem: building a secure, cloud-ready multi-user backend with clear engineering quality. The current system provides:
+Cloud Compute Service addresses a course-relevant engineering problem: constructing a secure, cloud-ready multi-user backend that is both functionally complete and operationally verifiable. The current implementation provides:
 
 1. Auth APIs for register, login, token refresh, logout, and current-user retrieval.
 2. Task APIs for create, list, get by ID, update, and delete.
@@ -88,11 +86,13 @@ Cloud Compute Service solves a practical course-aligned problem: building a secu
 4. Compute APIs for health ping and arithmetic calculation.
 5. Static frontend pages for home, register, login, task list, and task edit flows.
 
-The most important security property is user ownership isolation. Task access is scoped by authenticated user identity through service and repository boundaries. File APIs are protected and validated, including upload filename checks, storage boundary controls, and authentication requirements.
+The central security invariant is user ownership isolation. Task and file access are both constrained by authenticated identity, and requests that do not satisfy ownership or authentication requirements are rejected by design.
 
-Verification combines JUnit integration tests, local smoke scripts, and deployment verification scripts. Current validation confirms protected-route behavior, auth flow correctness, task CRUD behavior, file API behavior, and unauthenticated rejection semantics.
+Verification combines JUnit integration tests, local smoke scripts, and deployment verification scripts. Current validation confirms protected-route behavior, authentication flow correctness, task CRUD correctness, file API behavior, and unauthenticated rejection semantics.
 
-Operational readiness is supported by profile separation and environment templates. Local development defaults to SQLite for quick setup, while production profile supports MySQL/PostgreSQL through environment variables. EC2 scripts validate DB connectivity and run deployment checks consistently.
+Operational readiness is supported by profile separation and environment templates. Local development defaults to SQLite for low-friction reproducibility, while the production profile supports MySQL/PostgreSQL via environment variables. EC2 scripts provide deterministic DB prechecks and deployment verification.
+
+At the latest validation stage, observable outcomes include successful local integration test execution, successful smoke/deploy script checks, and confirmed cloud endpoint behavior for protected and public routes.
 
 ---
 
@@ -113,7 +113,13 @@ The project pursued four primary objectives:
 3. Deliver reproducible verification via automated tests and scripts.
 4. Prepare deployment artifacts for EC2 with configurable production databases.
 
-Success criteria include passing integration tests, passing smoke/deploy scripts, validated protected-route behavior, and synchronized documentation that matches implementation.
+Success criteria include passing integration tests, passing smoke/deploy scripts, validated protected-route behavior, and synchronized documentation that accurately reflects implementation behavior.
+
+This essay evaluates project outcomes against the following practical research questions:
+
+1. Can a course-scale Spring Boot service enforce robust user-level isolation for both task and file resources?
+2. Can JWT access/refresh design be implemented with reproducible verification evidence across local and EC2 contexts?
+3. Can deployment and demonstration risk be reduced through script-based operational checks and synchronized documentation?
 
 ### 1.3 Scope, Assumptions, and Constraints
 
@@ -188,6 +194,8 @@ Verification combines complementary layers:
 2. Smoke scripts for full API flow (auth, refresh, tasks, files).
 3. Deployment verifier scripts for environment-level checks.
 4. Playbooks for manual demo consistency.
+
+This layered strategy is intentionally designed to reduce false confidence from any single test modality. Backend correctness, API contract compliance, and operational behavior are each evaluated by separate but consistent evidence channels.
 
 ### 2.6 Chapter Summary
 
@@ -392,6 +400,16 @@ Deployment verifier checks include:
 
 Recent verification against local deployment endpoint passed all checks.
 
+To make verification outcomes explicit, Table 5.1 summarizes the major evidence dimensions.
+
+| Evidence Dimension | Scope | Latest Outcome |
+|---|---|---|
+| Integration tests | Spring context, auth, protected routes, task flow | Pass |
+| Smoke validation | Register/login/me/tasks/files/refresh/logout | Pass |
+| Deployment verifier | Health, docs, protected routes, auth/task/file flows | Pass |
+| Refresh-token lifecycle assertion | Old refresh token after rotation | Rejected as expected |
+| Cloud endpoint health | Local EC2 + public ping endpoint | HTTP 200 |
+
 ### 5.5 Security Behavior Validation
 
 Validated security outcomes:
@@ -438,10 +456,10 @@ Verification confirms functional correctness, security consistency, and deployme
 
 ### 6.3 Risks, Limitations, and Threats to Validity
 
-1. Current checks are course-scale; no large-load benchmarking was performed.
-2. Token revocation and advanced session policies can be further improved.
-3. Upload scanning and content-type hardening can be extended.
-4. Production schema governance should move to migration tooling (for example Flyway/Liquibase) for stronger change control.
+1. **External validity:** current evaluation focuses on course-scale workloads; large-scale concurrency and sustained load remain untested.
+2. **Construct validity:** current security assertions emphasize functional rejection outcomes (for example 401/ownership checks), but do not include formal penetration testing.
+3. **Operational validity:** EC2 verification confirms deployment viability, yet production-grade monitoring and incident workflows are not fully developed.
+4. **Evolution validity:** schema governance currently relies on runtime configuration and should migrate to formal migration tooling (for example Flyway/Liquibase).
 
 ### 6.4 Production Hardening Opportunities
 
@@ -461,7 +479,7 @@ The project reaches a strong course-production baseline and provides a clear roa
 
 ### 7.1 Conclusion
 
-Cloud Compute Service now delivers a complete secure microservice workflow with JWT authentication, user-scoped task management, protected file operations, and cloud-oriented deployment tooling. The system demonstrates architecture clarity, practical security controls, and repeatable verification across local and deployment contexts.
+Cloud Compute Service delivers a complete and verifiable secure microservice workflow comprising JWT authentication, user-scoped task management, protected file operations, and cloud-oriented deployment tooling. The implemented architecture demonstrates a coherent alignment between security policy, data ownership enforcement, and operational reproducibility. Within course constraints, the project achieves its stated technical objectives and provides auditable evidence for both correctness and deployability.
 
 ### 7.2 Lessons Learned
 

@@ -65,7 +65,7 @@ public class AuthController {
         String requestRefreshToken = request.getRefreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
-                .map(refreshTokenService::verifyExpiration)
+                .map(refreshTokenService::rotateRefreshToken)
                 .map(token -> {
                     AppUser user = token.getUser();
 

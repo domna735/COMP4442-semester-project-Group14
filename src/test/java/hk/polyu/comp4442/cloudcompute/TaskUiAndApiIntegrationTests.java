@@ -9,12 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,7 +51,7 @@ class TaskUiAndApiIntegrationTests {
     }
 
     @Test
-    void shouldServePublicPagesAndProtectTaskPage() throws Exception {
+        void shouldServePublicPagesAndProtectProtectedApis() throws Exception {
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
                 .andExpect(forwardedUrl("index.html"));
@@ -64,13 +67,16 @@ class TaskUiAndApiIntegrationTests {
                 .andExpect(status().isOk());
 
         mockMvc.perform(get("/task.html").accept(MediaType.TEXT_HTML))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login.html"));
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Task Page")));
+
+        mockMvc.perform(get("/api/v1/tasks"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void shouldRegisterLoginAndCreateReadUpdateDeleteOwnTask() throws Exception {
-        MockHttpSession session = registerAndLogin("demo_user", "demo_user@example.com", "password123");
+                String accessToken = registerAndLogin("demo_user", "demo_user@example.com", "password123");
 
         Map<String, Object> createPayload = new HashMap<>();
         createPayload.put("title", "Prepare demo script");
@@ -78,7 +84,7 @@ class TaskUiAndApiIntegrationTests {
         createPayload.put("status", "TODO");
 
         String created = mockMvc.perform(post("/api/v1/tasks")
-                        .session(session)
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPayload)))
                 .andExpect(status().isCreated())
@@ -91,7 +97,8 @@ class TaskUiAndApiIntegrationTests {
 
         Long id = objectMapper.readTree(created).get("id").asLong();
 
-        mockMvc.perform(get("/api/v1/tasks").session(session))
+        mockMvc.perform(get("/api/v1/tasks")
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(id))
                 .andExpect(jsonPath("$[0].status").value("TODO"))
@@ -103,24 +110,26 @@ class TaskUiAndApiIntegrationTests {
         updatePayload.put("status", "IN_PROGRESS");
 
         mockMvc.perform(put("/api/v1/tasks/{id}", id)
-                        .session(session)
+                        .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePayload)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Prepare demo script v2"))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
-        mockMvc.perform(delete("/api/v1/tasks/{id}", id).session(session))
+        mockMvc.perform(delete("/api/v1/tasks/{id}", id)
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/v1/tasks/{id}", id).session(session))
+        mockMvc.perform(get("/api/v1/tasks/{id}", id)
+                        .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("TASK_NOT_FOUND"));
     }
 
     @Test
     void shouldRejectInvalidTaskCreationForAuthenticatedUser() throws Exception {
-        MockHttpSession session = registerAndLogin("validation_user", "validation_user@example.com", "password123");
+                String accessToken = registerAndLogin("validation_user", "validation_user@example.com", "password123");
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("title", "");
@@ -128,14 +137,95 @@ class TaskUiAndApiIntegrationTests {
         payload.put("status", "TODO");
 
         mockMvc.perform(post("/api/v1/tasks")
-                        .session(session)
+                                                .header("Authorization", "Bearer " + accessToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
     }
 
-    private MockHttpSession registerAndLogin(String username, String email, String password) throws Exception {
+    @Test
+    void shouldRotateRefreshTokenAndRevokeOnLogout() throws Exception {
+        Map<String, String> tokens = registerAndLoginTokens("refresh_user", "refresh_user@example.com", "password123");
+        String accessToken = tokens.get("accessToken");
+        String refreshToken = tokens.get("refreshToken");
+
+        Map<String, Object> refreshPayload = new HashMap<>();
+        refreshPayload.put("refreshToken", refreshToken);
+
+        String refreshResponse = mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(refreshPayload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String rotatedRefreshToken = objectMapper.readTree(refreshResponse).get("refreshToken").asText();
+        org.junit.jupiter.api.Assertions.assertNotEquals(refreshToken, rotatedRefreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+
+        Map<String, Object> staleRefreshPayload = new HashMap<>();
+        staleRefreshPayload.put("refreshToken", rotatedRefreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(staleRefreshPayload)))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    void shouldReturn4xxForTraversalStyleDownloadRequest() throws Exception {
+        String accessToken = registerAndLogin("download_user", "download_user@example.com", "password123");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/files/download/../../evil.txt")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn();
+
+        int statusCode = result.getResponse().getStatus();
+        assertTrue(statusCode == 400 || statusCode == 404,
+                "Expected traversal request to be rejected with 400/404 but got: " + statusCode);
+    }
+
+    @Test
+    void shouldRejectUnsafeOrOversizedUploads() throws Exception {
+        String accessToken = registerAndLogin("file_guard_user", "file_guard_user@example.com", "password123");
+
+        MockMultipartFile exeFile = new MockMultipartFile(
+                "file",
+                "malware.exe",
+                "application/octet-stream",
+                "MZ binary".getBytes());
+
+        mockMvc.perform(multipart("/api/v1/files/upload")
+                        .file(exeFile)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isUnsupportedMediaType());
+
+        byte[] largePayload = new byte[(5 * 1024 * 1024) + 1];
+        MockMultipartFile oversizedFile = new MockMultipartFile(
+                "file",
+                "big.txt",
+                "text/plain",
+                largePayload);
+
+        mockMvc.perform(multipart("/api/v1/files/upload")
+                        .file(oversizedFile)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isPayloadTooLarge());
+    }
+
+        private String registerAndLogin(String username, String email, String password) throws Exception {
+                Map<String, String> tokens = registerAndLoginTokens(username, email, password);
+                return tokens.get("accessToken");
+        }
+
+        private Map<String, String> registerAndLoginTokens(String username, String email, String password) throws Exception {
         Map<String, Object> registerPayload = new HashMap<>();
         registerPayload.put("username", username);
         registerPayload.put("email", email);
@@ -151,13 +241,18 @@ class TaskUiAndApiIntegrationTests {
         loginPayload.put("username", username);
         loginPayload.put("password", password);
 
-        return (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginPayload)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.username").value(username))
                 .andReturn()
-                .getRequest()
-                .getSession(false);
+                .getResponse()
+                .getContentAsString();
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", objectMapper.readTree(loginResponse).get("accessToken").asText());
+        tokens.put("refreshToken", objectMapper.readTree(loginResponse).get("refreshToken").asText());
+        return tokens;
     }
 }
