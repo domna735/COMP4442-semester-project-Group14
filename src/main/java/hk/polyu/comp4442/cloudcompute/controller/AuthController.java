@@ -6,6 +6,7 @@ import hk.polyu.comp4442.cloudcompute.dto.LoginRequest;
 import hk.polyu.comp4442.cloudcompute.dto.RegisterRequest;
 import hk.polyu.comp4442.cloudcompute.dto.TokenRefreshRequest;
 import hk.polyu.comp4442.cloudcompute.entity.AppUser;
+import hk.polyu.comp4442.cloudcompute.entity.RefreshToken;
 import hk.polyu.comp4442.cloudcompute.security.CustomUserDetails;
 import hk.polyu.comp4442.cloudcompute.service.AuthService;
 import hk.polyu.comp4442.cloudcompute.service.RefreshTokenService;
@@ -57,7 +58,8 @@ public class AuthController {
     public ResponseEntity<AuthUserResponse> me(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(new AuthUserResponse(userDetails.getUser()));
     }
-    //implement refresh feature
+
+    // implement refresh feature
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();
@@ -65,11 +67,20 @@ public class AuthController {
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(token -> {
-                    // Generate a new Access Token with JWT Utils
-                    String newAccessToken = authService.generateAccessToken(token.getUser().getUsername());
-                    // Return the tokens
-                    return ResponseEntity.ok(new AuthResponse("Token refreshed successfully.", newAccessToken,
-                            requestRefreshToken, new AuthUserResponse(token.getUser())));
+                    AppUser user = token.getUser();
+
+                    // 1. Generate NEW Refresh Token
+                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+                    // 2. Generate NEW Access Token
+                    String newAccessToken = authService.generateAccessToken(user.getUsername());
+
+                    // 3. Return BOTH new tokens
+                    return ResponseEntity.ok(new AuthResponse(
+                            "Token refreshed successfully.",
+                            newAccessToken,
+                            newRefreshToken.getToken(), // Return the NEW Refresh Token
+                            new AuthUserResponse(user)));
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }

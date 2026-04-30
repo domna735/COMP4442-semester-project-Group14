@@ -3,6 +3,8 @@ package hk.polyu.comp4442.cloudcompute.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import hk.polyu.comp4442.cloudcompute.entity.RefreshToken;
 import hk.polyu.comp4442.cloudcompute.repository.AppUserRepository;
 import hk.polyu.comp4442.cloudcompute.repository.RefreshTokenRepository;
@@ -24,6 +26,8 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
+    @Transactional
+    // Ensures the delete + save is atomic
     public RefreshToken createRefreshToken(Long userId) {
 
         // delete old refresh token if user exist
@@ -51,4 +55,19 @@ public class RefreshTokenService {
         }
         return token;
     }
+
+    @Transactional
+    public RefreshToken rotateRefreshToken(RefreshToken token) {
+        verifyExpiration(token);
+        return createRefreshToken(token.getUser().getId());
+    }
+
+    @Transactional
+    public void revokeByUserId(Long userId) {
+        // Silently handle if user doesn't exist during logout to prevent 500 errors
+        userRepository.findById(userId).ifPresent(user -> {
+            refreshTokenRepository.deleteByUser(user);
+        });
+    }
+
 }

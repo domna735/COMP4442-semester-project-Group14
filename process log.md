@@ -594,8 +594,6 @@ Ensure the system remains database-agnostic, allowing SQLite as the default whil
 
 ---
 
-
-
 ### 2026-04-30 | Configure Web Server Header and Connection Timeouts
 
 **Intent:**
@@ -616,3 +614,24 @@ Managing timeouts at the application level is a critical defense. The implement 
 
 **Next:**
 Ensure the system remains function to determine if those production limit is too aggressive for users. Next steps include achieve refresh token rotation.
+
+---
+
+
+
+### 2026-04-30 | Finalizing refresh Token Lifecycle
+
+**Intent:**
+Enhance the security of the authentication lifecycle by implementing Refresh Token Rotation.
+
+**Action:**
+
+* Updated `AuthController.java` to to generate a completely new Refresh Token when each successful refresh request.
+* Adjust the `auth.js` to store new refresh token
+
+**Result:**
+
+If an attacker intercepts a previous refresh token, it become invalid once the legitimate user refreshes their session by refresh access token. The system now implements a "Single Use" refresh token policy. This prevent any reuse of an old token will pass on the authentication, prevent long-lived credentials.
+
+**Decision / Interpretation:**
+While reusing refresh tokens is simpler, rotation the refresh token is the industry standard for security. Choosing rotation over static tokens significantly reduces the window of opportunity for session hijacking.The token rotation is critical to ensure only newest token can verity in the auth middeware.

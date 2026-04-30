@@ -1,14 +1,14 @@
 
 // implement JWT header
 function getAuthHeaders() {
-      const token = localStorage.getItem("accessToken");
-      return {
+    const token = localStorage.getItem("accessToken");
+    return {
         "Authorization": "Bearer " + token,
         "Content-Type": "application/json"
-      };
-    }
+    };
+}
 
-    async function authFetch(url, options = {}) {
+async function authFetch(url, options = {}) {
     let accessToken = localStorage.getItem("accessToken");
 
     options.headers = {
@@ -33,10 +33,15 @@ function getAuthHeaders() {
             const data = await refreshRes.json();
             // Save NEW access token
             localStorage.setItem("accessToken", data.accessToken);
-            
+
+            // Save NEW refresh token
+            if (data.refreshToken) {
+                localStorage.setItem("refreshToken", data.refreshToken);
+            }
+
             // Retry the original request with the new token
             options.headers['Authorization'] = `Bearer ${data.accessToken}`;
-            return fetch(url, options); 
+            return fetch(url, options);
         } else {
             // Both tokens failed -> Logout
             localStorage.clear();
