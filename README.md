@@ -1,292 +1,279 @@
 # COMP4442 Semester Project Group 14
 
-Spring Boot cloud-hosted microservice project for COMP4442.
+Cloud Compute Service is a Spring Boot cloud computing application with:
 
-## Easy Setup (One Command)
+- JWT authentication (access token + refresh token)
+- user-scoped task CRUD
+- secure file upload/list/download APIs
+- compute utility APIs
+- local SQLite default runtime and EC2 production deployment scripts
 
-For local development, you can run everything with one script (H2 in-memory DB, no external DB setup required).
+## 1. Technology Stack
+
+- Java 17
+- Spring Boot 3.3.5
+- Spring Security
+- Spring Data JPA
+- SQLite (default local)
+- MySQL/PostgreSQL (production via environment variables)
+- OpenAPI/Swagger UI
+- Bash deployment and verification scripts
+
+## 2. Repository Structure
+
+- src/main/java: application source code
+- src/main/resources/static: frontend pages
+- src/test/java: integration tests
+- scripts: local one-command setup and smoke test
+- deploy/ec2: production env template, DB precheck, run script, deploy verifier
+- deploy/systemd: systemd service template
+- deploy/keys: JWT ECDSA key generation script
+
+## 3. Local Quick Start
 
 Prerequisites:
+
 - Java 17+
 - Maven 3.8+
 - curl
+
+Run one-command setup and test:
 
 ```bash
 chmod +x scripts/one-click-dev.sh scripts/smoke-test.sh
 ./scripts/one-click-dev.sh
 ```
 
-This script will:
-- Start the Spring Boot app on `http://localhost:8080`
-- Wait for health endpoint readiness
-- Run API smoke tests automatically (register, login, me, create task, list tasks, logout)
-
-Detailed quick guide: [one_command_playbook.md](one_command_playbook.md)
-
-Optional:
+Optional auto-stop mode:
 
 ```bash
 ./scripts/one-click-dev.sh --stop-after-test
 ```
 
-If server is already running, test only:
+If server is already running, run smoke test only:
 
 ```bash
 ./scripts/smoke-test.sh
 ```
 
-## Current Progress
-- Phase 1 baseline setup completed
-- Phase 2 completed: Task Management CRUD APIs implemented with validation and OpenAPI docs
-- Phase 3 started: database integration baseline prepared (dev H2 + prod env-based datasource)
-- Current focus: Task 3 UI multi-page flow with SQL-backed user authentication and protected task management
+## 4. JWT Key Setup (Required)
 
-## Step 1 Scope
-- Create baseline Spring Boot service
-- Provide a compute API endpoint
-- Prepare project for cloud deployment on AWS EC2
+Generate keys:
 
-## Step 2 Scope (In Progress)
-- Build Task Management APIs (create, retrieve, update, delete)
-- Add persistence layer and database integration path for AWS RDS
-- Extend API validation, error handling, and OpenAPI docs for Task module
-
-## API (Task Management)
-- `POST /api/v1/tasks`
-- `GET /api/v1/tasks`
-- `GET /api/v1/tasks/{id}`
-- `PUT /api/v1/tasks/{id}`
-- `DELETE /api/v1/tasks/{id}`
-
-## API (Authentication and User Management)
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
-
-Notes:
-- User accounts are stored in SQL table `users`.
-- Passwords are stored as BCrypt hashes (`password_hash`).
-- Task APIs are user-scoped: each authenticated user sees and edits only their own tasks.
-
-## UI Pages
-- Home page: `/index.html`
-- Login page: `/login.html`
-- Register page: `/register.html`
-- Task page (protected): `/task.html`
-- Edit page (protected): `/edit.html?id=<taskId>`
-
-## Task 2 RDS and EC2 Checklist (Teammate Runbook)
-Execute the following in order.
-
-1. Create an AWS RDS instance.
-  - Engine: MySQL 8.x or PostgreSQL 15+
-  - Public access: enabled (for project testing)
-  - Note endpoint, port, DB name, username, and password
-
-2. Configure AWS security groups.
-  - RDS inbound: allow DB port from EC2 security group
-  - EC2 inbound: allow `22` (SSH) and `8080` (API demo)
-
-3. Launch EC2 and install runtime.
 ```bash
-sudo apt update
-sudo apt install -y openjdk-17-jdk maven
-java -version
-mvn -version
+chmod +x deploy/keys/key.sh
+./deploy/keys/key.sh
 ```
 
-4. Build application JAR locally or on EC2.
+Place keys for local runtime:
+
+- src/main/resources/cert/ECDSA_384_private.pem
+- src/main/resources/cert/ECDSA_384_public.pem
+
+For EC2 production, use:
+
+- /opt/cloud-compute/cert/ECDSA_384_private.pem
+- /opt/cloud-compute/cert/ECDSA_384_public.pem
+
+## 5. API Coverage
+
+Authentication:
+
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- POST /api/v1/auth/refresh
+- GET /api/v1/auth/me
+- POST /api/v1/auth/logout
+
+Tasks (protected):
+
+- POST /api/v1/tasks
+- GET /api/v1/tasks
+- GET /api/v1/tasks/{id}
+- PUT /api/v1/tasks/{id}
+- DELETE /api/v1/tasks/{id}
+
+Files (protected):
+
+- POST /api/v1/files/upload
+- GET /api/v1/files/list
+- GET /api/v1/files/download/{filename}
+
+Compute:
+
+- GET /api/v1/compute/ping
+- POST /api/v1/compute/calculate
+
+Swagger:
+
+- /swagger-ui/index.html
+- /v3/api-docs
+
+## 6. EC2 Deployment (Production)
+
+### 6.1 Build
+
 ```bash
 mvn clean package -DskipTests
 ```
 
-5. Set production datasource variables on EC2.
-  - For MySQL example:
-```bash
-export DB_URL='jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
-export DB_USERNAME='<RDS_USERNAME>'
-export DB_PASSWORD='<RDS_PASSWORD>'
-export DB_DRIVER_CLASS_NAME='com.mysql.cj.jdbc.Driver'
-```
-  - For PostgreSQL example:
-```bash
-export DB_URL='jdbc:postgresql://<RDS_ENDPOINT>:5432/<DB_NAME>'
-export DB_USERNAME='<RDS_USERNAME>'
-export DB_PASSWORD='<RDS_PASSWORD>'
-export DB_DRIVER_CLASS_NAME='org.postgresql.Driver'
-```
-
-6. Run application with production profile.
-```bash
-java -jar target/cloud-compute-service-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
-```
-
-7. Verify endpoint from browser or Postman.
-```bash
-curl http://<EC2_PUBLIC_IP>:8080/api/v1/compute/ping
-curl http://<EC2_PUBLIC_IP>:8080/api/v1/tasks
-```
-
-8. Verify Swagger and Task CRUD flow.
-  - Open `http://<EC2_PUBLIC_IP>:8080/swagger-ui/index.html`
-  - Test create, read, update, and delete task against RDS
-
-## systemd Service Template (EC2)
-Create service file `/etc/systemd/system/cloud-compute.service`.
-
-```ini
-[Unit]
-Description=Cloud Compute Service
-After=network.target
-
-[Service]
-User=ubuntu
-WorkingDirectory=/home/ubuntu/COMP4442-semester-project-Group14
-Environment=SPRING_PROFILES_ACTIVE=prod
-Environment=DB_URL=jdbc:mysql://<RDS_ENDPOINT>:3306/<DB_NAME>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-Environment=DB_USERNAME=<RDS_USERNAME>
-Environment=DB_PASSWORD=<RDS_PASSWORD>
-Environment=DB_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
-ExecStart=/usr/bin/java -jar /home/ubuntu/COMP4442-semester-project-Group14/target/cloud-compute-service-0.0.1-SNAPSHOT.jar
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start service.
+### 6.2 Prepare env file
 
 ```bash
+cp deploy/ec2/.env.prod.example deploy/ec2/.env.prod
+```
+
+Set values in deploy/ec2/.env.prod:
+
+- SPRING_PROFILES_ACTIVE=prod
+- DB_URL
+- DB_USERNAME
+- DB_PASSWORD
+- DB_DRIVER_CLASS_NAME
+- JWT_PRIVATE_KEY_PATH
+- JWT_PUBLIC_KEY_PATH
+
+### 6.3 Database precheck
+
+```bash
+chmod +x deploy/ec2/setup-db.sh
+./deploy/ec2/setup-db.sh deploy/ec2/.env.prod
+```
+
+### 6.4 Run service
+
+```bash
+chmod +x deploy/ec2/run-prod.sh
+./deploy/ec2/run-prod.sh
+```
+
+### 6.5 Verify deployment
+
+```bash
+chmod +x deploy/ec2/verify-deploy.sh
+./deploy/ec2/verify-deploy.sh http://<EC2_PUBLIC_IP>:8080
+```
+
+### 6.6 Archive live EC2 verification evidence (recommended)
+
+```bash
+chmod +x deploy/ec2/live-verify-archive.sh
+./deploy/ec2/live-verify-archive.sh http://<EC2_PUBLIC_IP>:8080
+```
+
+Artifacts are saved under `evidence/ec2/<timestamp>_<host>/` and include:
+- verifier output log (`verify-deploy.log`)
+- metadata (`metadata.txt`)
+- optional screenshots (if a headless Chromium browser is available)
+
+### 6.7 Operational notes (2026-04-18)
+
+1. For startup/readiness checks on `/api/v1/compute/ping`, validate HTTP status code (`200`) instead of matching legacy body text such as `pong`.
+2. A polling command that only greps response body may report false negatives even when app is healthy.
+3. Protected file download endpoint requires `Authorization: Bearer <accessToken>`.
+4. Directly opening a protected download URL in browser address bar may return `401` because Authorization header is not attached automatically.
+5. Preferred demo flow: login first, then download from in-page UI action that performs token-authenticated fetch.
+
+## 7. systemd Service
+
+Template file:
+
+- deploy/systemd/cloud-compute.service
+
+After adapting paths on EC2:
+
+```bash
+sudo cp deploy/systemd/cloud-compute.service /etc/systemd/system/cloud-compute.service
 sudo systemctl daemon-reload
 sudo systemctl enable cloud-compute.service
 sudo systemctl start cloud-compute.service
 sudo systemctl status cloud-compute.service
 ```
 
-## Deployment Files In Repository
-- Environment template: `deploy/ec2/.env.prod.example`
-- Production run script: `deploy/ec2/run-prod.sh`
-- Deployment verification script: `deploy/ec2/verify-deploy.sh`
-- systemd unit template: `deploy/systemd/cloud-compute.service`
+## 8. Current Verification Status
 
-Make run script executable on EC2:
+Latest validated locally:
 
-```bash
-chmod +x deploy/ec2/run-prod.sh
-chmod +x deploy/ec2/verify-deploy.sh
-```
+- mvn clean test passed
+- one-click smoke flow passed
+- deploy verification script passed against local endpoint
+- protected route behavior verified (task/file APIs reject unauthenticated requests)
 
-Run deployment verification from EC2 or your local machine:
+## 9. Assignment Compliance Checklist
 
-```bash
-./deploy/ec2/verify-deploy.sh http://<EC2_PUBLIC_IP>:8080
-```
+### 9.1 Technological Merit
 
-## Troubleshooting RDS Connection (Quick)
-1. Security group issue
-  - Symptom: timeout or connection refused
-  - Check: RDS inbound rule allows DB port (3306/5432) from EC2 security group
+Current status: Strong
 
-2. Driver class mismatch
-  - Symptom: `Cannot load driver class` error
-  - Check: `DB_DRIVER_CLASS_NAME` matches database engine
-  - MySQL: `com.mysql.cj.jdbc.Driver`
-  - PostgreSQL: `org.postgresql.Driver`
+Evidence:
 
-3. JDBC URL format error
-  - Symptom: invalid URL or handshake error
-  - Check: endpoint, port, database name, and URL prefix are correct
-  - MySQL format: `jdbc:mysql://<endpoint>:3306/<db>?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`
-  - PostgreSQL format: `jdbc:postgresql://<endpoint>:5432/<db>`
+- Spring Boot layered architecture
+- JWT access + refresh implementation
+- secure file handling and protected APIs
+- SQL persistence with profile-based local/prod separation
+- EC2 deployment scripts and verifier automation
 
-4. Wrong credentials
-  - Symptom: access denied / authentication failed
-  - Check: `DB_USERNAME` and `DB_PASSWORD` values on EC2 environment or `EnvironmentFile`
+### 9.2 Development Trace Completeness (GitHub)
 
-## API (Initial)
-- `GET /api/v1/compute/ping`
-- `POST /api/v1/compute/calculate`
+Current status: Satisfied (trace exists and is substantial)
 
-### Example Request
-```json
-{
-  "operandA": 5,
-  "operandB": 3,
-  "operator": "ADD"
-}
-```
+Evidence:
 
-### Example Response
-```json
-{
-  "expression": "5.0 + 3.0",
-  "result": 8.0,
-  "timestamp": "2026-03-20T00:00:00"
-}
-```
+- repository contains many commits across feature, security, and deployment phases
+- multi-author contribution history exists in git log
+- clear milestone progression captured in process log
 
-## Local Run (after Java and Maven are installed)
-```bash
-mvn spring-boot:run
-```
+Required action before grading:
 
-Then open `http://localhost:8080/api/v1/compute/ping`.
+- share the GitHub repository with teacher account: wchshapp_business@icloud.com
+- if any member objects to future teaching/research use, send email to csqwang@polyu.edu.hk before final exam weeks with title:
+  Comp4442 [Your student ID] [Your @connect.polyu.hk preferred name] Objection to share the COMP4442 semester project Git repository for future teaching/research
 
-Open Swagger UI at `http://localhost:8080/swagger-ui/index.html`.
+### 9.3 Presentation and Demo Clarity
 
-## Easy Test Flow (Recommended)
+Current status: In progress, near ready
 
-### 1) Fast API verification (auto)
+Evidence:
 
-```bash
-./scripts/one-click-dev.sh --stop-after-test
-```
+- ppt.md and ppt_script.md prepared
+- realtime_demo_playbook.md and full real time demo playbook.md prepared
+- 12-minute demo flow exists with API verification steps
 
-Expected pass checks:
-- `GET /api/v1/compute/ping` → 200
-- `POST /api/v1/auth/register` → 201
-- `POST /api/v1/auth/login` → 200
-- `GET /api/v1/auth/me` → 200
-- `POST /api/v1/tasks` → 201
-- `GET /api/v1/tasks` → 200
-- `POST /api/v1/auth/logout` → 200
+Pending:
 
-### 2) UI/manual verification (for screenshots and demo)
-- Start app: `mvn spring-boot:run`
-- Open `http://localhost:8080`
-- Follow `test_execution_guide.md` phase-by-phase
-- Capture evidence screenshots required in this README and `plan for project.md`
+- final rehearsal with strict 12-minute accumulated clock discipline
+- final member job-division slide/script check
 
-## Test
-```bash
-mvn test
-```
+### 9.4 Document Quality
 
-## UI-Based Functional Test (Started)
-Automated UI-backed function tests are implemented in:
-- `src/test/java/hk/polyu/comp4442/cloudcompute/TaskUiAndApiIntegrationTests.java`
+Current status: In progress
 
-What is covered:
-- UI homepage availability (`/` and `/index.html`)
-- Task API CRUD flow used by the UI (create, list, update, delete)
-- Validation error behavior for invalid task payloads
+Evidence:
 
-Run only UI/API integration tests:
+- report.md template and full_technical_report.md updated
+- key playbooks and process log synchronized with current JWT + SQLite + EC2 flow
 
-```bash
-mvn -Dtest=TaskUiAndApiIntegrationTests test
-```
+Pending:
 
-## Task 3 UI Test Checklist (Report and Demo Evidence)
-Use this checklist to collect evidence for report/presentation artifacts.
+- final Word report export with strict format check:
+  - max 10 pages excluding cover
+  - Times New Roman 12
+  - A4
+  - 1 inch margins
+  - single column
+  - line spacing not less than single
+- final PowerPoint export with max 10 content pages excluding cover
+- ensure slides/report content matches live presentation and demo behavior
 
-- [ ] Open UI homepage and capture screenshot of initial state
-- [ ] Create one task from UI and capture success message + updated list
-- [ ] Edit task title/description/status and capture updated row state
-- [ ] Delete task and capture list refresh after deletion
-- [ ] Apply each status filter (TODO, IN_PROGRESS, DONE) and capture filtered results
-- [ ] Trigger one validation error (empty title) and capture error message
-- [ ] Run `mvn -Dtest=TaskUiAndApiIntegrationTests test` and save passing output screenshot
-- [ ] Record date/time, tester name, environment (local or EC2), and app URL in report notes
+## 10. Related Docs
+
+- one_command_playbook.md
+- playbook.md
+- realtime_demo_playbook.md
+- full real time demo playbook.md
+- test_execution_guide.md
+- full_technical_report.md
+- report.md
+- ppt.md
+- ppt_script.md
+- process log.md

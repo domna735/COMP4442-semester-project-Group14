@@ -3,7 +3,7 @@
 This playbook is the fastest path to run the Cloud Compute Service locally and verify core APIs.
 
 ## Goal
-- Start local server with H2 in-memory database
+- Start local server with SQLite default database
 - Validate API flow automatically
 - Keep usage easy for all team members
 
@@ -32,13 +32,18 @@ chmod +x scripts/one-click-dev.sh scripts/smoke-test.sh
 What it does:
 - Starts Spring Boot app on `http://localhost:8080`
 - Waits until `GET /api/v1/compute/ping` is healthy
-- Runs automatic smoke tests:
+- Runs automatic smoke tests (JWT + file flow):
   - register user
   - login
   - get current user
   - create task
   - list tasks
+  - refresh access token
+  - upload file
+  - list files
+  - download file
   - logout
+  - verify unauthenticated task/file access returns `401`
 
 ## One-Command Setup + Test + Auto Stop
 
@@ -69,7 +74,13 @@ You should see pass lines for all checks:
 - Get current user: HTTP 200
 - Create task: HTTP 201
 - List tasks: HTTP 200
+- Refresh access token: HTTP 200
+- Upload file: HTTP 200
+- List files: HTTP 200
+- Download file: HTTP 200
 - Logout user: HTTP 200
+- Reject unauthenticated tasks access: HTTP 401
+- Reject unauthenticated file list access: HTTP 401
 
 Final line should indicate all smoke tests passed.
 

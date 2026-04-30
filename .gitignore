@@ -4,3 +4,13 @@ target/
 *.iml
 *.log
 .DS_Store
+
+
+#ECDSA key pair
+deploy/keys/*.pem
+*.pem
+
+#upload file
+uploads/*
+# sqlite database
+*.db

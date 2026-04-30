@@ -14,6 +14,39 @@ set -a
 source "$SCRIPT_DIR/.env.prod"
 set +a
 
+require_var() {
+  local name="$1"
+  local value="${!name:-}"
+  if [[ -z "$value" ]]; then
+    echo "Missing required environment variable: $name"
+    exit 1
+  fi
+}
+
+require_var DB_URL
+require_var DB_USERNAME
+require_var DB_PASSWORD
+require_var DB_DRIVER_CLASS_NAME
+
+# Ensure JWT paths are always valid Spring Resource locations.
+JWT_PRIVATE_KEY_PATH="${JWT_PRIVATE_KEY_PATH:-file:/opt/cloud-compute/cert/ECDSA_384_private.pem}"
+JWT_PUBLIC_KEY_PATH="${JWT_PUBLIC_KEY_PATH:-file:/opt/cloud-compute/cert/ECDSA_384_public.pem}"
+
+if [[ "$JWT_PRIVATE_KEY_PATH" == /* ]]; then
+  JWT_PRIVATE_KEY_PATH="file:$JWT_PRIVATE_KEY_PATH"
+fi
+
+if [[ "$JWT_PUBLIC_KEY_PATH" == /* ]]; then
+  JWT_PUBLIC_KEY_PATH="file:$JWT_PUBLIC_KEY_PATH"
+fi
+
+export JWT_PRIVATE_KEY_PATH JWT_PUBLIC_KEY_PATH
+
+echo "Using profile: ${SPRING_PROFILES_ACTIVE:-prod}"
+echo "Using DB URL: $DB_URL"
+echo "Using JWT private key path: $JWT_PRIVATE_KEY_PATH"
+echo "Using JWT public key path: $JWT_PUBLIC_KEY_PATH"
+
 JAR_PATH="$ROOT_DIR/target/cloud-compute-service-0.0.1-SNAPSHOT.jar"
 if [[ ! -f "$JAR_PATH" ]]; then
   echo "Missing $JAR_PATH"
